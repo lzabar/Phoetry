@@ -17,7 +17,6 @@ pyvenv.cfg
 trained_model/poet-gpt2/model.safetensors
 
 # Ignore project directories
-images/
 Include/
 Lib/
 Scripts/
