@@ -13,7 +13,7 @@ model_path=project_folder_path+"/trained_model/poet-gpt2"
 # Proposed labels
 labels=["tree","flower","sunset","sunrise","cloud","mountain","beach","river","lake","waterfall","forest","grassland","desert","rain","snow",
                    "road","traffic jam","hill","valley","cave","farm","garden","coastline","field","pond","sky","animal","insect","fungi",
-                   "reaf","pebble","stone", "dog", "cat","bird","butterfly","bee", "stars","moon"]
+                   "leaf","pebble","stone", "dog", "cat","bird","butterfly","bee", "stars","moon","sun"]
 
 # Poem generation from picture
 image_path=images_path+"/sunset.jpg"

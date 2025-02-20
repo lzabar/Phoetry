@@ -14,7 +14,7 @@ from src.image_recognition import image_label_detector
 #Proposed labels
 labels=["tree","flower","sunset","sunrise","cloud","mountain","beach","river","lake","waterfall","forest","grassland","desert","rain","snow",
                    "road","traffic jam","hill","valley","cave","farm","garden","coastline","field","pond","sky","animal","insect","fungi",
-                   "reaf","pebble","stone", "dog", "cat","bird","butterfly","bee", "stars","moon"]
+                   "leaf","pebble","stone", "dog", "cat","bird","butterfly","bee", "stars","moon","sun"]
 image_path="path/image.jpg"
 top3_predicted_labels=image_label_detector(image_path,labels)
 print(top3_predicted_labels)
