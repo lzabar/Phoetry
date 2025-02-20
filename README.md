@@ -1,11 +1,12 @@
 # Phoetry
 The aim of the project if to generate a poem based on what's on the picture. The identification of elements on the picture focuses on nature-related categories. 
-PS: This is a project just for pratice.
+
+PS: This is a project just for practice.
 
 The are two main parts on the project:
 
 
-## 1 Image recognition
+## 1. Image recognition
 To identify specific objects in an image. Our focus here is nature (but can be changed according to preferences)
 ```
 from src.image_recognition import image_label_detector
@@ -18,7 +19,7 @@ image_path="path/image.jpg"
 top3_predicted_labels=image_label_detector(image_path,labels)
 print(top3_predicted_labels)
 ```
-## 2 Poem generation
+## 2. Poem generation
 To identify specific objects in an image. Our focus here is nature (but can be changed according to preferences)
 ```
 from src.poem_generator import poem_generator
