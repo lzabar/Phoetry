@@ -1,0 +1,28 @@
+# Ignore the virtual environment
+phoetry_env/
+venv/
+.env/
+torch_cpu.dll
+dnnl.lib
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore system files
+CACHEDIR.TAG
+pyvenv.cfg
+trained_model/poet-gpt2/model.safetensors
+
+# Ignore project directories
+images/
+Include/
+Lib/
+Scripts/
+share/
+checkpoint-10000/ 
+checkpoint-13854/
+
+
