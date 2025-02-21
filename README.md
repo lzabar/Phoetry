@@ -40,3 +40,15 @@ Points of improvement:
 - Readjust the parameters for the fine-tuning of gpt2
 - Readjust parameters for the poem generator
 - Maybe created an API
+
+#### Ideas to improve the poem generator:
+Create a system to measure the quality of the poem:
+- Check if all the words in the generated poem are in the english dictionnary and fix a threshold (ex: acceptable if 1% of the words in the poem are
+ not in the dictionnary)
+- Create an inverse model which identifies the theme of the poem based on the content, calculate similarity between predicted theme and true theme 
+and fix a threhold (ex: acceptable if similarity (predictied_theme, true_theme)>=50%)
+- Create a poem quality index such as:
+    index ={1 if threshold_dico<=1% and similarity (predictied_theme, true_theme)>=50, else 0}
+- Readjust generator parameters, generate 100 poems based on different themes and evaluates their poem quality index (proportion of poems with an
+index=1)
+- Keep readjusting to improve the proportion of poems with an index=1
