@@ -39,7 +39,7 @@ Points of improvement:
 - Enrich the datasets with more poems
 - Readjust the parameters for the fine-tuning of gpt2
 - Readjust parameters for the poem generator
-- Maybe created an API
+- Maybe create an API
 
 #### Ideas to improve the poem generator:
 Create a system to measure the quality of the poem:
