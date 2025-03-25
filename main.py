@@ -1,30 +1,26 @@
 # Install required packages
 # pip install -r requirements.txt
 
+
+# ----- LIBRAIRIES IMPORT ------------------------------------
+# Import main librairies
+import os
+
 # Import libraries
+from transformers import GPT2Tokenizer, GPT2LMHeadModel
+
+# Import src librairies
 from src.image_recognition import image_label_detector, choose_label
 from src.poem_generator import poem_generator
 
-# Define paths
-# project_folder_path="C:/Users/Annek/Documents/pytho exos/Phoetry/Phoetry_2"
-# images_path=project_folder_path+"/images"
-# model_path=project_folder_path+"/trained_model/poet-gpt2"
-
-
-# gpt-2
-import os
-
-# from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers import GPT2Tokenizer, GPT2LMHeadModel
-
+# ----- CHARGING MODEL ---------------------------------------
 model_path = "trained_model/poet-gpt2"
+images_path = "images"
 
+# Vérification que le modèle est bien chargé -> partie à supprimer en déploiement ?
 if not os.path.exists(os.path.join(model_path, "pytorch_model.bin")):
     print("Modèle non trouvé, téléchargement en cours...")
     model_name = "gpt2"
-    # model = AutoModelForCausalLM.from_pretrained("gpt2")
-    # tokenizer = AutoTokenizer.from_pretrained("gpt2")
-
     model = GPT2LMHeadModel.from_pretrained(model_name)
     tokenizer = GPT2Tokenizer.from_pretrained(model_name)
 
@@ -33,11 +29,8 @@ if not os.path.exists(os.path.join(model_path, "pytorch_model.bin")):
     print("Modèle téléchargé et sauvegardé !")
 else:
     print("Modèle déjà disponible, chargement en cours...")
-
-model = GPT2LMHeadModel.from_pretrained(model_path)
-tokenizer = GPT2Tokenizer.from_pretrained(model_path)
-
-images_path = "images"
+    model = GPT2LMHeadModel.from_pretrained(model_path)
+    tokenizer = GPT2Tokenizer.from_pretrained(model_path)
 
 # Proposed labels
 labels = [
