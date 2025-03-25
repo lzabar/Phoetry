@@ -27,14 +27,12 @@ if not os.path.exists(os.path.join(model_path, "pytorch_model.bin")):
     model = GPT2LMHeadModel.from_pretrained(model_name)
     tokenizer = GPT2Tokenizer.from_pretrained(model_name)
 
-    # Sauvegarde locale
     model.save_pretrained(model_path)
     tokenizer.save_pretrained(model_path)
     print("Modèle téléchargé et sauvegardé !")
 else:
     print("Modèle déjà disponible, chargement en cours...")
 
-# Charger le modèle
 model = GPT2LMHeadModel.from_pretrained(model_path)
 tokenizer = GPT2Tokenizer.from_pretrained(model_path)
 
