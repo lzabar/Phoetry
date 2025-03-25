@@ -22,7 +22,7 @@ model_path = "trained_model/poet-gpt2"
 if not os.path.exists(os.path.join(model_path, "pytorch_model.bin")):
     print("Modèle non trouvé, téléchargement en cours...")
     model_name = "gpt2"
-    # model = AutoModelForCausalLM.from_pretrained("gpt2") 
+    # model = AutoModelForCausalLM.from_pretrained("gpt2")
     # tokenizer = AutoTokenizer.from_pretrained("gpt2")
 
     model = GPT2LMHeadModel.from_pretrained(model_name)
@@ -44,10 +44,10 @@ model_path = "trained_model/poet-gpt2"
 
 # Proposed labels
 labels = [
-    "tree", "flower", "sunset", "sunrise", "cloud", "mountain", "beach", "river", "lake", 
-    "waterfall", "forest", "grassland", "desert", "rain", "snow", "road", "traffic jam", "hill", 
-    "valley", "cave", "farm", "garden", "coastline", "field", "pond", "sky", "animal", "insect", 
-    "fungi", "leaf", "pebble", "stone", "dog", "cat", "bird", "butterfly", 
+    "tree", "flower", "sunset", "sunrise", "cloud", "mountain", "beach", "river", "lake"
+    "waterfall", "forest", "grassland", "desert", "rain", "snow", "road", "traffic jam", "hill",
+    "valley", "cave", "farm", "garden", "coastline", "field", "pond", "sky", "animal", "insect",
+    "fungi", "leaf", "pebble", "stone", "dog", "cat", "bird", "butterfly",
     "bee", "stars", "moon", "sun"
 ]
 
@@ -59,7 +59,7 @@ def generate_poem_from_picture(image_path, labels):
     top3_predicted_labels = image_label_detector(image_path, labels)
     theme = choose_label(top3_predicted_labels)
     poem = poem_generator(
-        model_path=model_path, theme=theme, max_length=200, temperature=0.5, 
+        model_path=model_path, theme=theme, max_length=200, temperature=0.5,
         top_k=60, top_p=0.9, repetition_penalty=1.5
     )
     return poem
