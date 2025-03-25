@@ -10,7 +10,7 @@ class IntializePoemModel:
         self.model.eval()
 
 
-def create_prompt(theme):
+def create_prompt(theme: str):
     start_of_promt = ["For I am the", "I only I could have the", "Then we see the"]
     # Set up the initial prompt
     num_start_of_prompt = np.random.randint(0, 3)
@@ -19,13 +19,13 @@ def create_prompt(theme):
 
 
 def poem_generator(
-    model_path="trained_model/poet-gpt2",
-    theme="moon",
-    max_length=200,
-    temperature=0.5,
-    top_k=60,
-    top_p=0.9,
-    repetition_penalty=1.5,
+    model_path: str = "trained_model/poet-gpt2",
+    theme: str = "moon",
+    max_length: int = 200,
+    temperature: float = 0.5,
+    top_k: int = 60,
+    top_p: float = 0.9,
+    repetition_penalty: float = 1.5,
 ):
     """
     Take in input the poet_gpt2 model path, its parameters and a theme and generate a poem.

@@ -2,9 +2,7 @@
 import torch
 import argparse
 import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-from tqdm import tqdm
 from transformers import CLIPProcessor, CLIPModel
 
 
@@ -16,9 +14,10 @@ class IntializeClipModel:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def create_label_tokens(labels):
+def create_label_tokens(labels: list):
     """
-    Take the specific objects we want to identify in the image and create label tokens to feed the model
+    Take the specific objects we want to identify in the image and create label tokens 
+    to feed the model
     """
     clip_model = IntializeClipModel()
     # generate sentences
@@ -35,7 +34,7 @@ def create_label_tokens(labels):
 
 
 # Predict label function
-def image_label_detector(image_path, labels):
+def image_label_detector(image_path: str, labels: list):
     """
     Take the image path in input and predict the 3 most probable labels
     """
@@ -55,7 +54,7 @@ def image_label_detector(image_path, labels):
     return np.array(labels)[top3_scores_indexes].tolist()
 
 
-def choose_label(top3labels):
+def choose_label(top3labels: list):
     """
     Randomly choose one label among the top 3 predicted labels
     """
