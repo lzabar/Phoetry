@@ -18,7 +18,6 @@ from transformers import GPT2Tokenizer, GPT2LMHeadModel
 
 model_path = "trained_model/poet-gpt2"
 
-# Vérifier si le modèle est déjà téléchargé
 if not os.path.exists(os.path.join(model_path, "pytorch_model.bin")):
     print("Modèle non trouvé, téléchargement en cours...")
     model_name = "gpt2"
@@ -40,7 +39,6 @@ model = GPT2LMHeadModel.from_pretrained(model_path)
 tokenizer = GPT2Tokenizer.from_pretrained(model_path)
 
 images_path = "images"
-model_path = "trained_model/poet-gpt2"
 
 # Proposed labels
 labels = [
