@@ -2,7 +2,7 @@
 # pip install -r requirements.txt
 
 # Import libraries
-from src.image_recognition import image_label_detector, choose_label
+from src.image_recognition import SetClipModel
 from src.poem_generator import poem_generator
 
 # Define paths
@@ -52,8 +52,7 @@ image_path = images_path + "/sunset.jpg"
 
 
 def generate_poem_from_picture(image_path, labels):
-    top3_predicted_labels = image_label_detector(image_path, labels)
-    theme = choose_label(top3_predicted_labels)
+    theme = SetClipModel().image_label_detector(image_path,labels)
     poem = poem_generator(
         model_path=model_path, theme=theme, max_length=200, temperature=0.5,
         top_k=60, top_p=0.9, repetition_penalty=1.5
