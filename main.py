@@ -13,6 +13,7 @@ from src.poem_generator import poem_generator
 
 # gpt-2
 import os
+
 # from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
 
@@ -40,11 +41,45 @@ images_path = "images"
 
 # Proposed labels
 labels = [
-    "tree", "flower", "sunset", "sunrise", "cloud", "mountain", "beach", "river", "lake"
-    "waterfall", "forest", "grassland", "desert", "rain", "snow", "road", "traffic jam", "hill",
-    "valley", "cave", "farm", "garden", "coastline", "field", "pond", "sky", "animal", "insect",
-    "fungi", "leaf", "pebble", "stone", "dog", "cat", "bird", "butterfly",
-    "bee", "stars", "moon", "sun"
+    "tree",
+    "flower",
+    "sunset",
+    "sunrise",
+    "cloud",
+    "mountain",
+    "beach",
+    "river",
+    "lake" "waterfall",
+    "forest",
+    "grassland",
+    "desert",
+    "rain",
+    "snow",
+    "road",
+    "traffic jam",
+    "hill",
+    "valley",
+    "cave",
+    "farm",
+    "garden",
+    "coastline",
+    "field",
+    "pond",
+    "sky",
+    "animal",
+    "insect",
+    "fungi",
+    "leaf",
+    "pebble",
+    "stone",
+    "dog",
+    "cat",
+    "bird",
+    "butterfly",
+    "bee",
+    "stars",
+    "moon",
+    "sun",
 ]
 
 # Poem generation from picture
@@ -52,10 +87,15 @@ image_path = images_path + "/sunset.jpg"
 
 
 def generate_poem_from_picture(image_path, labels):
-    theme = SetClipModel().image_label_detector(image_path,labels)
+    theme = SetClipModel().image_label_detector(image_path, labels)
     poem = poem_generator(
-        model_path=model_path, theme=theme, max_length=200, temperature=0.5,
-        top_k=60, top_p=0.9, repetition_penalty=1.5
+        model_path=model_path,
+        theme=theme,
+        max_length=200,
+        temperature=0.5,
+        top_k=60,
+        top_p=0.9,
+        repetition_penalty=1.5,
     )
     return poem
 
