@@ -5,9 +5,12 @@ from transformers import GPT2Tokenizer, GPT2LMHeadModel
 
 class IntializePoemModel:
     def __init__(self, model_path):
-        self.tokenizer = GPT2Tokenizer.from_pretrained(model_path)
-        self.model = GPT2LMHeadModel.from_pretrained(model_path)
-        self.model.eval()
+        try:
+            self.tokenizer = GPT2Tokenizer.from_pretrained(model_path)
+            self.model = GPT2LMHeadModel.from_pretrained(model_path)
+            self.model.eval()
+        except Exception as e:
+            raise RuntimeError(f"Error loading model from {model_path}: {e}")
 
 
 def create_prompt(theme):
@@ -23,8 +26,14 @@ def create_prompt(theme):
     return prompt
 
 
-def poem_generator(model_path="trained_model/poet-gpt2", theme="moon", 
-          max_length=200,  temperature=0.5,  top_k=60, top_p=0.9, repetition_penalty=1.5):
+def poem_generator(
+    model_path="trained_model/poet-gpt2",
+    theme="moon",
+    max_length=200,
+    temperature=0.5,
+    top_k=60, top_p=0.9,
+    repetition_penalty=1.5
+):
     """
     Take in input the poet_gpt2 model path, its parameters and a theme and generate a poem.
     """
