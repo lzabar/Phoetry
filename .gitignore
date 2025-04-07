@@ -4,6 +4,8 @@ venv/
 .env/
 torch_cpu.dll
 dnnl.lib
+env_Ph
+.python-version
 
 # Ignore Python cache
 __pycache__/
