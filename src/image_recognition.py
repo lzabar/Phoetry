@@ -34,10 +34,12 @@ class SetClipModel:
         self.processor = CLIPProcessor.from_pretrained(self.model_id)
         self.model = CLIPModel.from_pretrained(self.model_id)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"Clip Model {model_id} initialized and running")
 
     def create_label_tokens(self, labels):
         """
-        Take the specific objects we want to identify in the image and create label tokens to feed the model
+        Take the specific objects we want to identify in the image 
+        And create label tokens to feed the model
         """
         # generate sentences
         clip_labels = [f"a photo of a {label}" for label in labels]
