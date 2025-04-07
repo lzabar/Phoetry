@@ -1,5 +1,4 @@
-# Install required packages
-# pip install -r requirements.txt
+
 
 # Import libraries
 from src.image_recognition import SetClipModel
