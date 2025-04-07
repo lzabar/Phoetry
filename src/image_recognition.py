@@ -38,8 +38,8 @@ class SetClipModel:
 
     def create_label_tokens(self, labels):
         """
-        Take the specific objects we want to identify in the image 
-        And create label tokens to feed the model
+        Take a list of labels from the labels dico.json
+        Uses the model to get a score 
         """
         # generate sentences
         clip_labels = [f"a photo of a {label}" for label in labels]
@@ -85,5 +85,5 @@ class SetClipModel:
 
         # choose label
         num_label = np.random.randint(0, 3)
-        
+
         return top3labels[num_label]

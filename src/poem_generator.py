@@ -51,15 +51,3 @@ def poem_generator(
     poem = poet_gpt2.tokenizer.decode(output[0], skip_special_tokens=True)
     return poem
 
-
-if __name__ == "__main__":
-    # Define arguments
-    parser = argparse.ArgumentParser(
-        description="Specify model path and theme for the poem"
-    )
-    parser.add_argument("--model_path", type=str, help="Model path")
-    parser.add_argument("--theme", type=str, help="Theme of the poem")
-
-    # Parse arguments
-    args = parser.parse_args()
-    poem_generator(args.model_path, args.theme)
