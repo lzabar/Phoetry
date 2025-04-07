@@ -16,7 +16,7 @@ __pycache__/
 # Ignore system files
 CACHEDIR.TAG
 pyvenv.cfg
-trained_model/poet-gpt2/model.safetensors
+trained_model/
 
 # Ignore project directories
 Include/

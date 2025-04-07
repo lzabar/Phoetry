@@ -51,15 +51,3 @@ class SetClipModel:
         # choose label
         num_label = np.random.randint(0, 3)
         return top3labels[num_label]
-
-
-if __name__ == "__main__":
-    # Define arguments
-    parser = argparse.ArgumentParser(description="Specify image path and labels")
-    parser.add_argument("--image_path", type=str, help="Image path")
-    parser.add_argument("--labels", type=str, help="Comma-separated labels")
-
-    # Parse arguments
-    args = parser.parse_args()
-    labels = args.labels.split(",") if args.labels else []
-    image_label_detector(args.image_path, labels)
