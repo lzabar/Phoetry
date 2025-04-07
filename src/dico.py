@@ -20,7 +20,7 @@ class Label_dico():
         """
         self.dico = dict()
 
-        with open('dico.json', 'r') as json_file:
+        with open('./data/dico.json', 'r') as json_file:
             self.dico = json.load(json_file)
 
 
@@ -29,7 +29,7 @@ class Label_dico():
         Used to add a theme (key) and its associated labels (list of strings)
         Return nothing
         """
-        if key in self.dico.keys:
+        if key in self.dico.keys():
             print(f"this key -{key}- is already used\n"
             "you must give another key")
         else:    
@@ -37,9 +37,10 @@ class Label_dico():
             print(f"-{key}- and its labels have been added to dico\n"
             "In order to record the dico you should used the '.export_dico()' method")
 
-    def export_dico(self):
+    def export(self):
         
         with open('./data/dico.json', 'w') as json_file:
-            json.dump(my_dict, json_file)
+            json.dump(self.dico, json_file)
+            
         print("The dico has been well exported")
 
