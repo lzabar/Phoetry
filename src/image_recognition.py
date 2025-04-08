@@ -1,12 +1,7 @@
-
-
-# Import libraries
 import torch
 import argparse
 import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-from tqdm import tqdm
 from transformers import CLIPProcessor, CLIPModel
 
 
@@ -43,7 +38,6 @@ class SetClipModel:
         """
         # generate sentences
         clip_labels = [f"a photo of a {label}" for label in labels]
-        # Create label tokens
         label_tokens = self.processor(
             text=clip_labels,
             padding=True,
@@ -56,7 +50,7 @@ class SetClipModel:
 
         # detach from pytorch gradient computation
         label_emb = label_emb.detach().cpu().numpy()
-
+        
         return label_emb
 
     # Predict label function
