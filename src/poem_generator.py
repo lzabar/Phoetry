@@ -9,7 +9,7 @@ class IntializePoemModel:
         self.model.eval()
 
 def create_prompt(theme):
-    start_of_promt=["For I am the", "I only I could have the","Then we see the"]
+    start_of_promt=["For I am the", "If only I could have the","Then we see the"]
     # Set up the initial prompt
     num_start_of_prompt=np.random.randint(0,3)
     prompt = f"{start_of_promt[num_start_of_prompt]} {theme},"
