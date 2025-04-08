@@ -10,7 +10,6 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 MODEL_PATH = os.path.join(BASE_DIR, "trained_model", "poet-gpt2")
 
 
-
 def load_model(model_path, model_name="gpt2"):
     """
     Load a pretrained GPT2 model and tokenizer locally or download if not present.
@@ -22,7 +21,7 @@ def load_model(model_path, model_name="gpt2"):
         tokenizer (GPT2Tokenizer): The corresponding tokenizer.
     """
 
-    model_file = os.path.join(model_path, "pytorch_model.bin")
+    model_file = os.path.join(model_path, "model.safetensors")
 
     if not os.path.exists(model_file):
         print("Model not found, downloading...")
@@ -59,7 +58,7 @@ labels = load_labels(os.path.join(DATA_DIR, "labels.json"))
 
 
 def generate_poem_from_picture(image_path, labels):
-     """
+    """
     Args:
         image_path (str): path to picture.
         labels (list of str): List of possible thematic labels to be detected in the image.
@@ -85,7 +84,7 @@ def generate_poem_from_picture(image_path, labels):
 def main():
     image_path = os.path.join(DATA_DIR, "images", "sunset.jpg")
     try:
-        print("Generation in progress...")
+        print("\nGeneration in progress...")
         theme, poem = generate_poem_from_picture(image_path, labels)
         print("\n", theme)
         print("\n", poem)
