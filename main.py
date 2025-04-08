@@ -10,6 +10,7 @@ DATA_DIR = os.path.join(BASE_DIR, "data")
 MODEL_PATH = os.path.join(BASE_DIR, "trained_model", "poet-gpt2")
 
 
+
 def load_model(model_path, model_name="gpt2"):
     """
     Load a pretrained GPT2 model and tokenizer locally or download if not present.
@@ -39,7 +40,7 @@ def load_model(model_path, model_name="gpt2"):
     tokenizer = GPT2Tokenizer.from_pretrained(model_path)
     return model, tokenizer
 
-
+  
 model, tokenizer = load_model(MODEL_PATH)
 
 
@@ -58,7 +59,7 @@ labels = load_labels(os.path.join(DATA_DIR, "labels.json"))
 
 
 def generate_poem_from_picture(image_path, labels):
-    """
+     """
     Args:
         image_path (str): path to picture.
         labels (list of str): List of possible thematic labels to be detected in the image.

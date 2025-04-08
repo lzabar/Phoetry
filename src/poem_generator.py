@@ -31,7 +31,8 @@ def poem_generator(
     theme="moon",
     max_length=200,
     temperature=0.5,
-    top_k=60, top_p=0.9,
+    top_k=60,
+    top_p=0.9,
     repetition_penalty=1.5
 ):
     """
@@ -42,6 +43,7 @@ def poem_generator(
 
     input_ids = poet_gpt2.tokenizer.encode(prompt, return_tensors="pt")
 
+    # Generate text
     output = poet_gpt2.model.generate(
         input_ids,
         max_length=max_length,
@@ -52,15 +54,7 @@ def poem_generator(
         do_sample=True,
     )
 
+    # Decode and print the poem
     poem = poet_gpt2.tokenizer.decode(output[0], skip_special_tokens=True)
 
     return poem
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Specify model path and theme for the poem")
-    parser.add_argument("--model_path", type=str, help="Model path")
-    parser.add_argument("--theme", type=str, help="Theme of the poem")
-
-    args = parser.parse_args()
-    poem_generator(args.model_path, args.theme)
