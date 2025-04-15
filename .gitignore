@@ -17,6 +17,7 @@ __pycache__/
 CACHEDIR.TAG
 pyvenv.cfg
 trained_model/
+mlruns/
 
 # Ignore project directories
 Include/

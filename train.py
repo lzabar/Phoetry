@@ -1,34 +1,52 @@
-from datasets import load_dataset
+import kagglehub
+import pandas as pd
+from datasets import (
+    load_dataset,
+    DatasetDict,
+    concatenate_datasets,
+    Dataset
+)
 from transformers import (
     GPT2Tokenizer,
     GPT2LMHeadModel,
-    Trainer,
     TrainingArguments,
     DataCollatorForLanguageModeling,
 )
-
+from src.set_llm import (
+    tokenize_function,
+    CausalLMTrainer
+)
 
 # Load dataset
-poems = load_dataset("shahules786/PoetryFoundationData")
+#   dataset1
+foundation_poems = load_dataset("shahules786/PoetryFoundationData")
+#   dataset2
+mexwell_poems = pd.read_csv(f"{kagglehub.dataset_download("mexwell/poem-dataset")}/final_df_emotions(remove-bias).csv")
+mexwell_poems["author"] = "unknown"
+mexwell_poems = mexwell_poems[["label", "poem content", "author", "type", "age"]]
+mexwell_poems.columns = ["poem name", "content", "author", "type", "age"]
+mexwell_poems
+#   dataset3
+abiemo_poems = pd.read_csv(f"{kagglehub.dataset_download("pkkazipeta143/americanbritishindian-emotion-poetry-dataset")}/ABIEMO_2334.csv")
+abiemo_poems["author"] = "unknown"
+abiemo_poems["age"] = "unknown"
+abiemo_poems = abiemo_poems[["Emotions", "poems", "author", "class", "age"]]
+abiemo_poems.columns = ["poem name", "content", "author", "type", "age"]
+abiemo_poems
+#   concatenate datasets
+poems = DatasetDict()
+poems["train"] = concatenate_datasets(
+    [
+     foundation_poems["train"],
+     Dataset.from_pandas(mexwell_poems),
+     Dataset.from_pandas(abiemo_poems)
+    ]
+)
 
 # Initialize model
 model_name = "gpt2"
 tokenizer = GPT2Tokenizer.from_pretrained(model_name)
 model = GPT2LMHeadModel.from_pretrained(model_name)
-
-
-# create a tokenize function
-def tokenize_function(dataset):
-    poem = dataset["content"]
-    tokenizer.truncation_side = "left"
-    tokenized_inputs = tokenizer(
-        poem,
-        return_tensors="pt",
-        truncation=True,
-        padding=True,
-        max_length=512
-    )
-    return tokenized_inputs
 
 
 # add pad token if none exists
@@ -37,7 +55,7 @@ if tokenizer.pad_token is None:
     model.resize_token_embeddings(len(tokenizer))
 
 
-tokenized_poems = poems["train"].map(tokenize_function, batched=True)
+tokenized_poems = poems["train"].map(lambda dataset: tokenize_function(dataset, tokenizer), batched=True)
 tokenized_poems
 
 # Format dataset
@@ -62,17 +80,6 @@ training_args = TrainingArguments(
     no_cuda=False,  # If False, forces GPU usage (set True if you want CPU)
     fp16=True,  # Use mixed precision for speedup (if using GPU
 )
-
-
-class CausalLMTrainer(Trainer):
-    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
-        # Ensure we set up the labels correctly for causal language modeling
-        labels = inputs.get(
-            "input_ids"
-        ).clone()  # Set labels as input_ids for causal language modeling
-        outputs = model(**inputs)
-        loss = outputs.loss  # Get the loss from model outputs
-        return (loss, outputs) if return_outputs else loss
 
 
 # Set up the Trainer
