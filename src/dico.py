@@ -2,29 +2,42 @@
 Only a dico with labels associated to a key
 """
 import json
+import requests
+
 
 class Label_dico():
     """
     A simple class derived from dict() to deal with labels
     """
-    dico : dict
+    dico: dict
     """
     A dico with :
     key --> theme
     list --> labels
     """
+    URL: str
+    """
+    The URL of labels stocked on S3 SSP CLOUD
+    Not sensitive --> free access is ok
+    """
 
     def __init__(self):
         """
-        Initialize the dico by charging the file ./data/dico.json
+        Initialize the dico by charging the file labels.json
         """
         self.dico = dict()
+        self.URL = "https://minio.lab.sspcloud.fr/paultoudret/ensae-reproductibilite/Phoetry/Datasets/labels.json"
 
-        with open('./data/dico.json', 'r') as json_file:
-            self.dico = json.load(json_file)
+        # Get the response of the requested URL
+        response = requests.get(self.URL)
 
+        # Vérification du statut de la réponse
+        if response.status_code == 200:  # Positive request
+            self.dico = response.json()
+        else:
+            print(f"Erreur lors du téléchargement du fichier : {response.status_code}")
 
-    def add_label(self, key : str, labels = [str]):
+    def add_label(self, key: str, labels: [str]):
         """
         Used to add a theme (key) and its associated labels (list of strings)
         Return nothing
@@ -38,7 +51,10 @@ class Label_dico():
             "In order to record the dico you should used the '.export_dico()' method")
 
     def export(self):
-        
+        """
+        NOT READY YET
+        NEED TO STOCK THE JSON ON S3 SSP CLOUD
+        """
         with open('./data/dico.json', 'w') as json_file:
             json.dump(self.dico, json_file)
             
