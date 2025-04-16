@@ -7,7 +7,7 @@ import numpy as np
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
 
 
-class IntializePoemModel:
+class PoemModel:
     """
     A class to initialize a model and use it
     """
@@ -50,6 +50,10 @@ class IntializePoemModel:
         start = time.time()
 
         self.URL = URL
+        print("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
+        print(f"Initialization : Start --> {URL}")
+        print("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
+
         response = requests.get(self.URL)
 
         # Checking status
@@ -75,16 +79,20 @@ class IntializePoemModel:
             # We download every file in the list
             i = 1      # only for printing
             for file in self.dico['files']:
-                resp = requests.get(bucket_URL + self.name + '/' + file)
-
-                if resp.status_code == 200:
-                    with open(self.local_dir + file, "wb") as f:
-                        f.write(resp.content)
-                        print(f'Download : [{i}/{len(self.dico['files'])}]Success --> {file}')
-                        i += 1
+                if os.path.exists(self.local_dir + file):      # checking that file is  already downloaded
+                    print(f'Download : [{i}/{len(self.dico['files'])}] Already downloaded --> {file}')
+                    i += 1
                 else:
-                    print(f'Download : Fail --> {file} // error : {resp.status_code}')
-                    return None
+                    resp = requests.get(bucket_URL + self.name + '/' + file)
+
+                    if resp.status_code == 200:
+                        with open(self.local_dir + file, "wb") as f:
+                            f.write(resp.content)
+                            print(f'Download : [{i}/{len(self.dico['files'])}] Success --> {file}')
+                            i += 1
+                    else:
+                        print(f'Download : Fail --> {file} // error : {resp.status_code}')
+                        return None
 
         # Try to initialize the model
         try:
@@ -123,7 +131,7 @@ class IntializePoemModel:
             print(f'but found {self.dico.keys()}')
             return False
 
-    def create_prompt(theme):
+    def create_prompt(self, theme):
 
         start_of_promt = [
             "For I am the",
@@ -131,33 +139,43 @@ class IntializePoemModel:
             "Then we see the"
         ]
         # Set up the initial prompt
-        num_start_of_prompt = np.random.randint(0, 3)
-        prompt = f"{start_of_promt[num_start_of_prompt]} {theme},"
+        n = np.random.randint(0, len(start_of_promt))
+        prompt = f"{start_of_promt[n]} {theme},"
 
         return prompt
 
-
-    def poem_generator(
-        model_path="trained_model/poet-gpt2",
-        theme="moon",
-        max_length=200,
-        temperature=0.5,
-        top_k=60,
-        top_p=0.9,
-        repetition_penalty=1.5
+    def generate_poem(
+        self,
+        theme: str,
+        max_length: int = 200,
+        temperature: float = 0.5,
+        top_k: int = 60,
+        top_p: float = 0.9,
+        repetition_penalty: float = 1.5
     ):
         """
         Take in input the poet_gpt2 model path, its parameters and a theme and generate a poem.
         """
-        poet_gpt2 = IntializePoemModel(model_path)
-        prompt = create_prompt(theme)
+        start_of_promt = [
+            "For I am the",
+            "I only I could have the",
+            "Then we see the"
+        ]
+        n = np.random.randint(0, len(start_of_promt))
+        prompt = start_of_promt[n] + theme + ','
 
-        input_ids = poet_gpt2.tokenizer.encode(prompt, return_tensors="pt")
+
+        input_ids = self.tokenizer.encode(
+            "lune",
+            return_tensors="pt"
+            )
 
         # Generate text
-        output = poet_gpt2.model.generate(
+        output = self.model.generate(
             input_ids,
             max_length=max_length,
+            num_return_sequences=1,
+            no_repeat_ngram_size=2,
             temperature=temperature,
             top_k=top_k,
             top_p=top_p,
@@ -166,6 +184,6 @@ class IntializePoemModel:
         )
 
         # Decode and print the poem
-        poem = poet_gpt2.tokenizer.decode(output[0], skip_special_tokens=True)
+        poem = self.tokenizer.decode(output[0], skip_special_tokens=True)
 
         return poem
