@@ -16,7 +16,7 @@ __pycache__/
 # Ignore system files
 CACHEDIR.TAG
 pyvenv.cfg
-trained_model/
+#trained_model/
 mlruns/
 
 # Ignore project directories
@@ -25,6 +25,7 @@ Lib/
 Scripts/
 share/
 checkpoint-10000/ 
-checkpoint-13854/
-
-
+checkpoint-20000/
+checkpoint-30000/
+checkpoint-40000/
+checkpoint-49024/
