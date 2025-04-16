@@ -1,8 +1,9 @@
 from transformers import Trainer
 
+
 # create a tokenize function
-def tokenize_function(dataset, tokenizer):
-    poem = dataset["content"]
+def tokenize_function(dataset, tokenizer, poem_column):
+    poem = dataset[poem_column]
     tokenizer.truncation_side = "left"
     tokenized_inputs = tokenizer(
         poem,
@@ -13,12 +14,17 @@ def tokenize_function(dataset, tokenizer):
     )
     return tokenized_inputs
 
+
 class CausalLMTrainer(Trainer):
-    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
-        # Ensure we set up the labels correctly for causal language modeling
-        labels = inputs.get(
-            "input_ids"
-        ).clone()  # Set labels as input_ids for causal language modeling
+    def compute_loss(
+        self,
+        model,
+        inputs,
+        return_outputs=False,
+        num_items_in_batch=None
+    ):
+        labels = inputs.get("input_ids").clone()        # Set labels as input_ids for causal language modeling
+
         outputs = model(**inputs)
-        loss = outputs.loss  # Get the loss from model outputs
+        loss = outputs.loss                             # Get the loss from model outputs
         return (loss, outputs) if return_outputs else loss
