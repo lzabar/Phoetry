@@ -5,7 +5,7 @@ import json
 import requests
 
 
-class Label_dico():
+class LabelDico():
     """
     A simple class derived from dict() to deal with labels
     """
@@ -43,12 +43,12 @@ class Label_dico():
         Return nothing
         """
         if key in self.dico.keys():
-            print(f"this key -{key}- is already used\n"
-            "you must give another key")
-        else:    
+            print(f"this key -{key}- is already used\n")
+            print("you must give another key")
+        else:
             self.dico[key] = labels
-            print(f"-{key}- and its labels have been added to dico\n"
-            "In order to record the dico you should used the '.export_dico()' method")
+            print(f"-{key}- and its labels have been added to dico\n")
+            print("In order to record the dico you should used the '.export_dico()' method")
 
     def export(self):
         """
@@ -57,6 +57,4 @@ class Label_dico():
         """
         with open('./data/dico.json', 'w') as json_file:
             json.dump(self.dico, json_file)
-            
         print("The dico has been well exported")
-

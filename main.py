@@ -1,8 +1,27 @@
 import os
 import json
+import requests
+
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
+
 from src.image_recognition import SetClipModel
-from src.poem_generator import poem_generator
+from src.poem_generator import PoemModel
+
+
+# GETTING THE JSON WHERE AVAILABLE MODELS ARE REGISTERED
+URL = "https://minio.lab.sspcloud.fr/paultoudret/ensae-reproductibilite/Phoetry/Poem_models/model_available.json"
+
+response = requests(URL)
+if response.status_code == 200:
+    print("Download : Success --> Available Models")
+    available_models = response.json()
+
+    i = 1
+    for model in available_models.keys():
+        print(f"Available Model [{i}/{len(available_models.keys())}] : {model}")
+        i += 1
+
+
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
