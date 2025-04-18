@@ -80,7 +80,7 @@ class PoemModel:
             i = 1      # only for printing
             for file in self.dico['files']:
                 if os.path.exists(self.local_dir + file):      # checking that file is  already downloaded
-                    print(f'Download : [{i}/{len(self.dico['files'])}] Already downloaded --> {file}')
+                    print(f"Download : [{i}/{len(self.dico['files'])}] Already downloaded --> {file}")
                     i += 1
                 else:
                     resp = requests.get(bucket_URL + self.name + '/' + file)
@@ -88,23 +88,24 @@ class PoemModel:
                     if resp.status_code == 200:
                         with open(self.local_dir + file, "wb") as f:
                             f.write(resp.content)
-                            print(f'Download : [{i}/{len(self.dico['files'])}] Success --> {file}')
+                            print(f"Download : [{i}/{len(self.dico['files'])}] Success --> {file}")
                             i += 1
                     else:
-                        print(f'Download : Fail --> {file} // error : {resp.status_code}')
+                        print(f"Download : Fail --> {file} // error : {resp.status_code}")
                         return None
 
         # Try to initialize the model
         try:
             self.tokenizer = GPT2Tokenizer.from_pretrained(self.local_dir)
             self.model = GPT2LMHeadModel.from_pretrained(self.local_dir)
+            #if self.tokenizer.pad_token is None:
+            #    self.tokenizer.pad_token = self.tokenizer.eos_token
+            #    self.model.config.pad_token_id = self.tokenizer.pad_token_id
+
             self.model.eval()
             end = time.time()
             delta = round(abs(end - start), 1)
 
-            if self.tokenizer.pad_token is None:
-                self.tokenizer.pad_token = self.tokenizer.eos_token
-                self.model.config.pad_token_id = self.tokenizer.pad_token_id
 
             print('----------------------------------------------')
             print(f'Initialization : Complete in {delta} sec --> Model is running')
@@ -168,17 +169,14 @@ class PoemModel:
         #n = np.random.randint(0, len(start_of_promt))
         prompt = start_of_promt[0] + theme + ','
 
-        inputs = self.tokenizer(
+        inputs = self.tokenizer.encode(
             prompt,
             return_tensors="pt",
-            padding=True,
-            truncation=True
             )
 
         # Generate text
         output = self.model.generate(
-            input_ids=inputs['input_ids'],
-            attention_mask=inputs['attention_mask'],
+            inputs[0],
             max_length=max_length,
             temperature=temperature,
             top_k=top_k,
