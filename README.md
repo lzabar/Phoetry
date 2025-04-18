@@ -1,3 +1,27 @@
+Faire un truc joli (mettre des images)``Licence
+
+
+1 Presentation du projet
+
+Version : 1.0
+Main features :
+- Prend une image / thèmes possibles / Poemes générés (anglais + haiku)
+
+  1.1 Detail reconnaissance d'image
+  1.2 Detail generation de poem
+
+  Disclaimer
+
+  Future developpement
+  
+2 Comment utiliser (Docker, kuber ? Api)
+Local / Pas local
+
+3 Cote developpeur : how to train
+  fichier de config.json
+
+
+
 # Phoetry
 The aim of the project if to generate a poem based on what's on the picture. The identification of elements on the picture focuses on nature-related categories. 
 
