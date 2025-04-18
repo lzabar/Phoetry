@@ -80,15 +80,17 @@ class PoemModel:
             i = 1      # only for printing
             for file in self.dico['files']:
                 if os.path.exists(self.local_dir + file):      # checking that file is  already downloaded
-                    print(f"Download : [{i}/{len(self.dico['files'])}] Already downloaded --> {file}")
+                    print(f"Already downloaded : [{i}/{len(self.dico['files'])}] Success --> {file}")
                     i += 1
                 else:
                     resp = requests.get(bucket_URL + self.name + '/' + file)
 
                     if resp.status_code == 200:
+                        st = time.time()
                         with open(self.local_dir + file, "wb") as f:
                             f.write(resp.content)
-                            print(f"Download : [{i}/{len(self.dico['files'])}] Success --> {file}")
+                            es = time.time()
+                            print(f"Download : [{i}/{len(self.dico['files'])}] Success in {round(es-st,2)}--> {file}")
                             i += 1
                     else:
                         print(f"Download : Fail --> {file} // error : {resp.status_code}")
@@ -98,9 +100,9 @@ class PoemModel:
         try:
             self.tokenizer = GPT2Tokenizer.from_pretrained(self.local_dir)
             self.model = GPT2LMHeadModel.from_pretrained(self.local_dir)
-            #if self.tokenizer.pad_token is None:
-            #    self.tokenizer.pad_token = self.tokenizer.eos_token
-            #    self.model.config.pad_token_id = self.tokenizer.pad_token_id
+            if self.tokenizer.pad_token is None:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
+                self.model.config.pad_token_id = self.tokenizer.pad_token_id
 
             self.model.eval()
             end = time.time()
@@ -136,19 +138,6 @@ class PoemModel:
             print(f'but found {self.dico.keys()}')
             return False
 
-    def create_prompt(self, theme):
-
-        start_of_promt = [
-            "For I am the",
-            "I only I could have the",
-            "Then we see the"
-        ]
-        # Set up the initial prompt
-        n = np.random.randint(0, len(start_of_promt))
-        prompt = f"{start_of_promt[n]} {theme},"
-
-        return prompt
-
     def generate_poem(
         self,
         theme: str,
@@ -176,7 +165,7 @@ class PoemModel:
 
         # Generate text
         output = self.model.generate(
-            inputs[0],
+            inputs,
             max_length=max_length,
             temperature=temperature,
             top_k=top_k,
@@ -187,5 +176,4 @@ class PoemModel:
 
         # Decode and print the poem
         poem = self.tokenizer.decode(output[0], skip_special_tokens=True)
-
         return poem
