@@ -2,10 +2,13 @@ import requests
 import os
 import time
 
+
 import numpy as np
 
+from src.my_log import get_logger
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
 
+logger = get_logger(name=__name__)
 
 class PoemModel:
     """
@@ -47,32 +50,33 @@ class PoemModel:
         - Local directory where to download the model
         - Model and Tokenizer
         """
+        logger.info("PoemModel Class called")
         start = time.time()
 
         self.URL = URL
-        print("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
-        print(f"Initialization : Start --> {URL}")
-        print("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
+        logger.info(f"Initialization : Start --> {URL}")
 
         response = requests.get(self.URL)
 
         # Checking status
         if response.status_code == 200:     # Positive request
             self.dico = response.json()
-            print('Download : Success --> dico')
+            
         else:
-            print(f"Download : Fail --> dico : {response.status_code}")
+            logger.error(f"Download : Fail --> dico : {response.status_code}")
             return None
 
         # Checking the all keys are in the config file
         if self.check_dico() is False:      # Not all keys in self.dico
-            print('Config : Fail --> keys')
+            logger.error("Config : Fail --> keys")
             return None
         else:
-            print('Config : Success --> keys')
+            logger.info("Config : Success --> keys")
             self.name = self.dico['name']
             self.local_dir = './trained_model/' + self.name + '/'    # where the model will be stored localy
             os.makedirs(self.local_dir, exist_ok=True)
+
+            logger.info(f"local dir set to {self.local_dir}")
 
             bucket_URL = self.dico['URL']
 
@@ -80,7 +84,7 @@ class PoemModel:
             i = 1      # only for printing
             for file in self.dico['files']:
                 if os.path.exists(self.local_dir + file):      # checking that file is  already downloaded
-                    print(f"Already downloaded : [{i}/{len(self.dico['files'])}] Success --> {file}")
+                    logger.info(f"Already downloaded : [{i}/{len(self.dico['files'])}] Success --> {file}")
                     i += 1
                 else:
                     resp = requests.get(bucket_URL + self.name + '/' + file)
@@ -90,10 +94,10 @@ class PoemModel:
                         with open(self.local_dir + file, "wb") as f:
                             f.write(resp.content)
                             es = time.time()
-                            print(f"Download : [{i}/{len(self.dico['files'])}] Success in {round(es-st,2)}--> {file}")
+                            logger.info(f"Download : [{i}/{len(self.dico['files'])}] Success in {round(es - st, 2)}--> {file}")
                             i += 1
                     else:
-                        print(f"Download : Fail --> {file} // error : {resp.status_code}")
+                        logger.error(f"Download : Fail --> {file} // error : {resp.status_code}")
                         return None
 
         # Try to initialize the model
@@ -108,9 +112,8 @@ class PoemModel:
             end = time.time()
             delta = round(abs(end - start), 1)
 
+            logger.info(f'Initialization : Complete in {delta} sec --> Model is running')
 
-            print('----------------------------------------------')
-            print(f'Initialization : Complete in {delta} sec --> Model is running')
         except Exception as e:
             raise RuntimeError(f"Error loading model from {self.local_dir}: {e}")
 
@@ -134,8 +137,8 @@ class PoemModel:
         if keys == list(self.dico.keys()):
             return True
         else:
-            print(f'keys should be {keys}', end='\n')
-            print(f'but found {self.dico.keys()}')
+            logger.debug(f'keys should be {keys}', end='\n')
+            logger.debug(f'but found {self.dico.keys()}')
             return False
 
     def generate_poem(
@@ -162,6 +165,7 @@ class PoemModel:
             prompt,
             return_tensors="pt",
             )
+        logger.info("Encoding : Success --> inputs")
 
         # Generate text
         output = self.model.generate(
@@ -173,7 +177,10 @@ class PoemModel:
             repetition_penalty=repetition_penalty,
             do_sample=True
         )
+        logger.info("Generating : Success --> outputs")
 
         # Decode and print the poem
         poem = self.tokenizer.decode(output[0], skip_special_tokens=True)
+        logger.info("Decoding : Succes --> poem")
+        logger.info(f"Length of poem : {len(poem)}")
         return poem

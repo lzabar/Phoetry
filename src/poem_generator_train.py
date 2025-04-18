@@ -4,6 +4,21 @@ from transformers import GPT2Tokenizer, GPT2LMHeadModel, TrainingArguments, Data
 from src.set_llm import tokenize_function, CausalLMTrainer
 
 
+class PoemModelTrainer():
+    """
+    A class to get GPT2 model from huggingface and fine tuned them for our purposes
+    """
+    name: str
+    """
+    The name of our model in training.
+    Should be : gpt2_xx_y--y
+    xx : language used (2 digits)
+    y--y : type of poems to generate (n digits)
+    """
+
+    def __init__(self, name):
+        self.name = name
+        
 
 
 # ENVIRONMENT CONFIGURATION ---------------------------
