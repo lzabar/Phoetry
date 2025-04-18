@@ -22,7 +22,7 @@ if response.status_code == 200:
         i += 1
 
 
-URL_en_poems = available_models['gpt2_fr_haiku']
+URL_en_poems = available_models['gpt2_en_poems']
 poem_model = PoemModel(URL=URL_en_poems)
 
 theme = 'moon'

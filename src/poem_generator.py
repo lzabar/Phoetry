@@ -102,6 +102,10 @@ class PoemModel:
             end = time.time()
             delta = round(abs(end - start), 1)
 
+            if self.tokenizer.pad_token is None:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
+                self.model.config.pad_token_id = self.tokenizer.pad_token_id
+
             print('----------------------------------------------')
             print(f'Initialization : Complete in {delta} sec --> Model is running')
         except Exception as e:
@@ -161,26 +165,26 @@ class PoemModel:
             "I only I could have the",
             "Then we see the"
         ]
-        n = np.random.randint(0, len(start_of_promt))
-        prompt = start_of_promt[n] + theme + ','
+        #n = np.random.randint(0, len(start_of_promt))
+        prompt = start_of_promt[0] + theme + ','
 
-
-        input_ids = self.tokenizer.encode(
-            "lune",
-            return_tensors="pt"
+        inputs = self.tokenizer(
+            prompt,
+            return_tensors="pt",
+            padding=True,
+            truncation=True
             )
 
         # Generate text
         output = self.model.generate(
-            input_ids,
+            input_ids=inputs['input_ids'],
+            attention_mask=inputs['attention_mask'],
             max_length=max_length,
-            num_return_sequences=1,
-            no_repeat_ngram_size=2,
             temperature=temperature,
             top_k=top_k,
             top_p=top_p,
             repetition_penalty=repetition_penalty,
-            do_sample=True,
+            do_sample=True
         )
 
         # Decode and print the poem
