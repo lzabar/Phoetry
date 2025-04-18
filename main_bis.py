@@ -11,7 +11,6 @@ from src.poem_generator import PoemModel
 # SETTING LOGGER
 logger = get_logger(name=__name__)
 
-
 # GETTING THE JSON WHERE AVAILABLE MODELS ARE REGISTERED
 URL = "https://minio.lab.sspcloud.fr/paultoudret/ensae-reproductibilite/Phoetry/Poem_models/model_available.json"
 

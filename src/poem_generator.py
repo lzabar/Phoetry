@@ -10,6 +10,7 @@ from transformers import GPT2Tokenizer, GPT2LMHeadModel
 
 logger = get_logger(name=__name__)
 
+
 class PoemModel:
     """
     A class to initialize a model and use it
@@ -50,7 +51,6 @@ class PoemModel:
         - Local directory where to download the model
         - Model and Tokenizer
         """
-        logger.info("PoemModel Class called")
         start = time.time()
 
         self.URL = URL
