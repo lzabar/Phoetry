@@ -11,12 +11,13 @@ from transformers import (
     GPT2LMHeadModel,
     TrainingArguments,
     DataCollatorForLanguageModeling,
+    Trainer
 )
 from src.set_llm import (
     tokenize_function,
     CausalLMTrainer
 )
-from transformers import Trainer
+
 
 class CausalLMTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
@@ -87,68 +88,68 @@ class TrainingLLM:
         return dataset 
 
         
-        def tokenize_dataset(self, dataset):
-            if self.poem_type="haiku":
-                poems_column="text"
-            else:
-                poems_column="content"
-            def tokenize_function(self, tokenizer, poems_column):
-                poem = dataset[poems_column]
-                tokenizer.truncation_side = "left"
-                tokenized_inputs = tokenizer(
-                    poem,
-                    return_tensors="pt",
-                    truncation=True,
-                    padding=True,
-                    max_length=512
-                    )
-                return tokenized_inputs
-            tokenized_dataset = dataset["train"].map(
-                lambda x: tokenize_function(x, self.tokenizer, poems_column),
-                batched=True)
-            return tokenized_dataset
-
-        def training_preparation(self):
-            # DATA PREPARATION ---------------------------
-            data_collator = DataCollatorForLanguageModeling(
-                tokenizer=self.tokenizer,
-                return_tensors='pt',
-                mlm=False
+    def tokenize_dataset(self, dataset):
+        if self.poem_type=="haiku":
+            poems_column="text"
+        else:
+            poems_column="content"
+        def tokenize_function(self, tokenizer, poems_column):
+            poem = dataset[poems_column]
+            tokenizer.truncation_side = "left"
+            tokenized_inputs = tokenizer(
+                poem,
+                return_tensors="pt",
+                truncation=True,
+                padding=True,
+                max_length=512
                 )
-                
-            # TRAINING ARGUMENTS ---------------------------
-            training_args = TrainingArguments(
-                output_dir=self.save_dir,                        # output directory for model checkpoints
-                do_eval=False,                              # evaluate every few steps
-                learning_rate=5e-5,                         # learning rate for optimizer
-                per_device_train_batch_size=2,              # batch size for training
-                num_train_epochs=2,                         # number of training epochs
-                save_steps=10_000,                          # save checkpoints every 10,000 steps
-                save_total_limit=5,                         # only keep the 2 most recent checkpoints
-                logging_dir="./logs",                       # directory to save logs
-                logging_steps=500,                          # log every 500 steps
-                report_to=None,
-                no_cuda=False,                              # If False, forces GPU usage (set True if you want CPU)
-                fp16=True                                   # Use mixed precision for speedup (if using GPU
-                )
-            return data_collator,training_args
+            return tokenized_inputs
+        tokenized_dataset = dataset["train"].map(
+            lambda x: tokenize_function(x, self.tokenizer, poems_column),
+            batched=True)
+        return tokenized_dataset
 
-        def train_model(self, tokenized_dataset):
-            data_collator,training_args= TrainingLLM(self.poem_type).training_preparation()
-            print("Starting training...")
-            trainer = CausalLMTrainer(
-                model=self.model,
-                args=training_args,
-                train_dataset=tokenized_dataset,
-                data_collator=data_collator)
-            trainer.train()
-            print("Training complete!")
-        
-        def save_trained_model(self): #modifier pour sauvegarder dans s3
-            print("Saving model to:", self.save_dir)
-            self.model.save_pretrained(SAVE_DIR)
-            self.tokenizer.save_pretrained(SAVE_DIR)
-            print("Saving complete!")
+    def training_preparation(self):
+        # DATA PREPARATION ---------------------------
+        data_collator = DataCollatorForLanguageModeling(
+            tokenizer=self.tokenizer,
+            return_tensors='pt',
+            mlm=False
+            )
+            
+        # TRAINING ARGUMENTS ---------------------------
+        training_args = TrainingArguments(
+            output_dir=self.save_dir,                        # output directory for model checkpoints
+            do_eval=False,                              # evaluate every few steps
+            learning_rate=5e-5,                         # learning rate for optimizer
+            per_device_train_batch_size=2,              # batch size for training
+            num_train_epochs=2,                         # number of training epochs
+            save_steps=10_000,                          # save checkpoints every 10,000 steps
+            save_total_limit=5,                         # only keep the 2 most recent checkpoints
+            logging_dir="./logs",                       # directory to save logs
+            logging_steps=500,                          # log every 500 steps
+            report_to=None,
+            no_cuda=False,                              # If False, forces GPU usage (set True if you want CPU)
+            fp16=True                                   # Use mixed precision for speedup (if using GPU
+            )
+        return data_collator,training_args
+
+    def train_model(self, tokenized_dataset):
+        data_collator,training_args= TrainingLLM(self.poem_type).training_preparation()
+        print("Starting training...")
+        trainer = CausalLMTrainer(
+            model=self.model,
+            args=training_args,
+            train_dataset=tokenized_dataset,
+            data_collator=data_collator)
+        trainer.train()
+        print("Training complete!")
+    
+    def save_trained_model(self): #modifier pour sauvegarder dans s3
+        print("Saving model to:", self.save_dir)
+        self.model.save_pretrained(SAVE_DIR)
+        self.tokenizer.save_pretrained(SAVE_DIR)
+        print("Saving complete!")
 
 
             
