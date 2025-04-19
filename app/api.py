@@ -26,6 +26,26 @@ else:
     logger.error(f"Download : Fail --> Available Models : error {response.status_code}")
 
 
+# Setting a dico to register the status of model
+model_status = {}
+
+for key in available_models.keys():
+    model_status[key] = "Not initialized"
+
+
+
+### CODE TO CHANGE 
+
+
+
+class ModelRequest(BaseModel):
+    model_name: str
+
+
+class PoemRequest(BaseModel):
+    model_name: str
+    theme: str
+
 
 @app.get("/")
 def read_root():
@@ -37,15 +57,25 @@ def read_root():
 
 @app.get("/available")
 def read_model_available():
-    return available_models
+    logger.info("GET : /available")
+    return model_status
 
 
-class ModelRequest(BaseModel):
-    model_name: str
 
-@app.get("/load_model/")
-def load_model(model_name: str):
-    if model_name in available_models.keys():
-        return {"message": f"Modèle '{model_name}' reçu via GET et prêt à être initialisé"}
+
+@app.post("/init_model/")
+def init_model(req: ModelRequest):
+
+    if req.model_name in available_models.keys():
+
+        poem_model = PoemModel(available_models[req.model_name])
+
+        if model_status[req.model_name] == 'Initialized':
+            return {
+                f"Model {req.model_name}": "Valid",
+                f"Model {req.model_name}": "Already initialized, ready to run"
+            }
+        else:
+
     else:
         return {"message": f"Modèle '{model_name}' not available"}

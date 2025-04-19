@@ -16,7 +16,7 @@ def get_logger(name=__name__):
             filename='log.log',
             encoding='utf-8',
             level=logging.DEBUG,
-            format="[%(asctime)s] [%(lineno)d] [%(levelname)s] [%(name)s/%(funcName)s]--> %(message)s",
+            format="[%(asctime)s]s [%(levelname)s] [%(name)s/%(funcName)s]--> %(message)s",
             datefmt="%m/%d/%Y %H:%M:%S",
         )
 
