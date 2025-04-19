@@ -1,3 +1,5 @@
+import tempfile
+import os
 import logging
 import joblib
 import s3fs
@@ -60,7 +62,7 @@ class TrainingLLM:
             joblib.dump(obj, f)
 
     def _load_gpt2(self):
-        gpt2_s3_path = f"{self.s3_uri}/gpt2"
+        gpt2_s3_path = f"{self.s3_uri}/phoetry/gpt2"
 
         if self._s3_exists(gpt2_s3_path):
             self.logger.info(f"Loading model and tokenizer from {gpt2_s3_path} on S3...")
@@ -70,17 +72,25 @@ class TrainingLLM:
             self.logger.info("Model and tokenizer not found on S3. Downloading from HuggingFace...")
             model = GPT2LMHeadModel.from_pretrained("gpt2")
             tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+
             try:
-                model.save_pretrained(gpt2_s3_path)
-                tokenizer.save_pretrained(gpt2_s3_path)
-                self.logger.info(f"Model and tokenizer saved to {gpt2_s3_path} on S3.")
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    model.save_pretrained(tmpdir)
+                    tokenizer.save_pretrained(tmpdir)
+
+                    for file in os.listdir(tmpdir):
+                        local_path = os.path.join(tmpdir, file)
+                        remote_path = f"{gpt2_s3_path}/{file}"
+                        self.fs.put(local_path, remote_path)
+
+                    self.logger.info(f"Model and tokenizer uploaded to {gpt2_s3_path} on S3.")
             except Exception as e:
                 self.logger.error(f"Error saving model and tokenizer to S3: {e}")
-    
+
         return model, tokenizer
 
     def retrieve_dataset(self):
-        dataset_s3_path = f"{self.s3_uri}/datasets/{self.poem_type}.joblib"
+        dataset_s3_path = f"{self.s3_uri}/phoetry/datasets/{self.poem_type}.joblib"
 
         if self._s3_exists(dataset_s3_path):
             self.logger.info("Loading dataset from S3...")
