@@ -1,6 +1,7 @@
 import requests
 import os
 import time
+#import logging
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
 
 
@@ -8,42 +9,26 @@ class PoemModel:
     """
     A class to initialize a model and use it
     """
-    URL: str
-    """
-    The URL to get the info of the model
-    """
-    dico: dict
-    """
-    A dictionnary to stock informations about the model
-    """
-    local_dir: str
-    """
-    The address of the local directory where to stok the model
-    """
-    name: str
-    """
-    The name of the fine tuned model. Unique to every model
-    """
-    model: GPT2LMHeadModel
-    """
-    Type of model used
-    """
-    tokenizer: GPT2Tokenizer
-    """
-    tokenizer used for GPT2 model
-    """
+    URL: str                    # The URL to get the info of the model
+    dico: dict                  # A dictionnary to stock informations about the model
+    local_dir: str              # The address of the local directory where to stok the model
+    name: str                   # The name of the fine tuned model. Unique to every model
+    model: GPT2LMHeadModel      # Type of model used
+    tokenizer: GPT2Tokenizer    # tokenizer used for GPT2 model
 
     def __init__(self, URL):
         """
-        Initialize the model by checking the model is available
-        thanks to its URL.
+        Initialize the model by checking the model is available thanks to its URL.
         Input :
-        - URL to download the model
+            - URL to download the model
         Initialize also:
-        - Name of the model
-        - Local directory where to download the model
-        - Model and Tokenizer
+            - Name of the model
+            - Local directory where to download the model
+            - Model and Tokenizer
         """
+        #self.logger = logging.getLogger(__name__)
+        #self.logger.setLevel(logging.INFO)
+
         start = time.time()
 
         self.URL = URL
@@ -134,37 +119,33 @@ class PoemModel:
             print(f'but found {self.dico.keys()}')
             return False
 
-    def generate_poem(
-        self,
-        theme: str,
-        max_length: int = 200,
-        temperature: float = 0.5,
-        top_k: int = 60,
-        top_p: float = 0.9,
-        repetition_penalty: float = 1.5
-    ):
+    def generate_poem(self, theme: str, poem_type: str):
         """
-        Take in input the poet_gpt2 model path, its parameters and a theme and generate a poem.
+        Generate a poem based on a theme and poem type.
+        The parameters from each type are automatically loaded from the JSON config.
         """
-        prompt = theme
+        params = self.dico.get("poem_gpt_params", {})
+        if poem_type not in params:
+            raise ValueError(f"Poem type '{poem_type}' not found in configuration file.")
+
+        args = params[poem_type]
 
         inputs = self.tokenizer.encode(
-            prompt,
+            theme,
             return_tensors="pt",
         )
 
         # Generate text
         output = self.model.generate(
             inputs,
-            max_length=max_length,
-            temperature=temperature,
-            top_k=top_k,
-            top_p=top_p,
-            repetition_penalty=repetition_penalty,
-            do_sample=True
+            do_sample=True,
+            **args
         )
 
         # Decode and print the poem
         poem = self.tokenizer.decode(output[0], skip_special_tokens=True)
-        poem = poem[len(prompt):].strip()
+
+        # do not include theme at the start of the poem
+        poem = poem[len(theme):].strip()
+
         return poem
