@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install Python
 RUN apt-get -y update && \
-    apt-get install -y python3-pip 
+    apt-get install -y python3-pip && \
     apt-get clean && \
 
 # Install project dependencies
