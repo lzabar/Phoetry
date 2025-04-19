@@ -1,17 +1,16 @@
 FROM ubuntu:22.04
 
-ENV DEBIAN_FRONTEND=noninteractive
-
+WORKDIR ${HOME}/Phoetry
 # Install Python
+
 RUN apt-get -y update && \
-    apt-get install -y python3-pip && \
+    apt-get install -y python3-pip
 
 # Install project dependencies
 COPY requirements.txt .
+COPY app ./app
+
 RUN pip install -r requirements.txt
 
 COPY src ./src
-# COPY train.py .
-COPY app ./app
-
 CMD ["bash", "-c", "./app/run.sh"]
