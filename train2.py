@@ -4,10 +4,20 @@ from transformers import GPT2Tokenizer, GPT2LMHeadModel, TrainingArguments, Data
 from src.training_setup import TrainingLLM
 
 
+
+
+
+# ENVIRONMENT CONFIGURATION ---------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SAVE_DIR = os.path.join(BASE_DIR, "trained_model", "poet-gpt2")
+LOG_DIR = os.path.join(BASE_DIR, "logs")
+
+
 # Define arguments
 parser = argparse.ArgumentParser(description="Specify type of poem")
 parser.add_argument("--poem_type", type=str, help="Poem type between 'haiku' and 'classic'")
 args = parser.parse_args()
+
 
 # Set up training
 training_setup=TrainingLLM(args.poem_type)
