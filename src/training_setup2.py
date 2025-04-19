@@ -1,6 +1,6 @@
 import logging
 import joblib
-import fsspec
+import s3fs
 import kagglehub
 import pandas as pd
 from datasets import (
@@ -16,11 +16,6 @@ from transformers import (
     DataCollatorForLanguageModeling,
 )
 from transformers import Trainer
-
-
-# LOGGER CONFIGURATION ---------------------------
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 class CausalLMTrainer(Trainer):
@@ -40,8 +35,12 @@ class TrainingLLM:
     A class to train the model from retrieving the dataset to fine-tune gpt-2
     """
     def __init__(self, poem_type, s3_uri=None):
+        logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
+
         self.poem_type = poem_type
-        self.s3_uri = s3_uri.rstrip("/")
+        self.s3_uri = s3_uri.rstrip("/") if s3_uri else None
+        self.fs = s3fs.S3FileSystem(client_kwargs={"endpoint_url": "https://minio.lab.sspcloud.fr"})
         self.model, self.tokenizer = self._load_gpt2()
 
         # add token padding if missing
@@ -49,21 +48,15 @@ class TrainingLLM:
             self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
             self.model.resize_token_embeddings(len(self.tokenizer))
 
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger(__name__)
-
     def _s3_exists(self, path):
-        fs = fsspec.filesystem("s3")
-        return fs.exists(path)
+        return self.fs.exists(path)
 
     def _load_from_s3(self, path):
-        fs = fsspec.filesystem("s3")
-        with fs.open(path, "rb") as f:
+        with self.fs.open(path, "rb") as f:
             return joblib.load(f)
 
     def _save_to_s3(self, obj, path):
-        fs = fsspec.filesystem("s3")
-        with fs.open(path, "wb") as f:
+        with self.fs.open(path, "wb") as f:
             joblib.dump(obj, f)
 
     def _load_gpt2(self):
@@ -77,11 +70,13 @@ class TrainingLLM:
             self.logger.info("Model and tokenizer not found on S3. Downloading from HuggingFace...")
             model = GPT2LMHeadModel.from_pretrained("gpt2")
             tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-
-            self._save_to_s3(model, f"{gpt2_s3_path}/model")
-            self._save_to_s3(tokenizer, f"{gpt2_s3_path}/tokenizer")
-            self.logger.info(f"Model and tokenizer saved to {gpt2_s3_path} on S3.")
-
+            try:
+                model.save_pretrained(gpt2_s3_path)
+                tokenizer.save_pretrained(gpt2_s3_path)
+                self.logger.info(f"Model and tokenizer saved to {gpt2_s3_path} on S3.")
+            except Exception as e:
+                self.logger.error(f"Error saving model and tokenizer to S3: {e}")
+    
         return model, tokenizer
 
     def retrieve_dataset(self):
@@ -153,7 +148,7 @@ class TrainingLLM:
         return training_args, data_collator
 
     def train(self, tokenized_dataset):
-        training_args, data_collator = self.prepare_training()
+        training_args, data_collator = self.training_preparation()
         trainer = CausalLMTrainer(
             model=self.model,
             tokenizer=self.tokenizer,
