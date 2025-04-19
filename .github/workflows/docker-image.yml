@@ -23,8 +23,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
-        name: Build and push
+        name: Build and push multi-arch image
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: paultoudret/phoetry:latest
+          platforms: linux/amd64,linux/arm64
+          tags: |
+              paultoudret/phoetry:latest
+              paultoudret/phoetry:dev
