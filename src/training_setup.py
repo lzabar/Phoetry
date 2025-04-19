@@ -1,8 +1,12 @@
 import os
+import tempfile
+import logging
 import joblib
-import fsspec
+import s3fs
 import kagglehub
 import pandas as pd
+import json
+from datetime import datetime
 from datasets import (
     load_dataset,
     DatasetDict,
@@ -34,51 +38,91 @@ class TrainingLLM:
     """
     A class to train the model from retrieving the dataset to fine-tune gpt-2
     """
-    def __init__(self, poem_type):
-        """
-        Initialize model, tokenizer and define poem type (poem_type £ ["haiku", "classic"])
-        """
+    def __init__(self, poem_type, s3_uri=None):
+        logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
 
         self.poem_type = poem_type
-        # ENVIRONMENT CONFIGURATION
-        self.base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.save_dir = os.path.join(self.base_dir, "trained_model", "poet-gpt2", self.poem_type)
-        self.log_dir = os.path.join(self.base_dir, "logs", self.poem_type)
+        self.s3_uri = s3_uri.rstrip("/") if s3_uri else None
+        self.fs = s3fs.S3FileSystem(client_kwargs={"endpoint_url": "https://minio.lab.sspcloud.fr"})
+        self.model, self.tokenizer = self._load_gpt2()
 
-        # MODEL INITIALIZATION
-        self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-        self.model = GPT2LMHeadModel.from_pretrained("gpt2")
-
-        # ADD TOKEN PADDING IF MISSING
+        # add token padding if missing
         if self.tokenizer.pad_token is None:
             self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
             self.model.resize_token_embeddings(len(self.tokenizer))
 
-    def retrieve_datasets(self):
-        """
-        To import data
-        """
+    def _s3_exists(self, path):
+        return self.fs.exists(path)
+
+    def _load_from_s3(self, path):
+        with self.fs.open(path, "rb") as f:
+            return joblib.load(f)
+
+    def _save_to_s3(self, obj, path):
+        with self.fs.open(path, "wb") as f:
+            joblib.dump(obj, f)
+
+    def _load_gpt2(self):
+        gpt2_s3_path = f"{self.s3_uri}/phoetry/gpt2"
+
+        if self._s3_exists(gpt2_s3_path):
+            self.logger.info(f"Loading model and tokenizer from {gpt2_s3_path} on S3...")
+
+            with tempfile.TemporaryDirectory() as tmpdir:
+                files = self.fs.ls(gpt2_s3_path, detail=False)
+                for file_path in files:
+                    filename = os.path.basename(file_path)
+                    local_path = os.path.join(tmpdir, filename)
+                    self.fs.get(file_path, local_path)
+
+                model = GPT2LMHeadModel.from_pretrained(tmpdir)
+                tokenizer = GPT2Tokenizer.from_pretrained(tmpdir)
+
+        else:
+            self.logger.info("Model and tokenizer not found on S3. Downloading from HuggingFace...")
+            model = GPT2LMHeadModel.from_pretrained("gpt2")
+            tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+
+            try:
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    model.save_pretrained(tmpdir)
+                    tokenizer.save_pretrained(tmpdir)
+
+                    for file in os.listdir(tmpdir):
+                        local_path = os.path.join(tmpdir, file)
+                        remote_path = f"{gpt2_s3_path}/{file}"
+                        self.fs.put(local_path, remote_path)
+
+                    self.logger.info(f"Model and tokenizer uploaded to {gpt2_s3_path} on S3.")
+            except Exception as e:
+                self.logger.error(f"Error saving model and tokenizer to S3: {e}")
+
+        return model, tokenizer
+
+    def retrieve_dataset(self):
+        dataset_s3_path = f"{self.s3_uri}/phoetry/datasets/{self.poem_type}.joblib"
+
+        if self._s3_exists(dataset_s3_path):
+            self.logger.info("Loading dataset from S3...")
+            return self._load_from_s3(dataset_s3_path)
+
+        self.logger.info("Dataset not found on S3. Downloading...")
         if self.poem_type == "haiku":
-            print("Loading haiku dataset...")
+            self.logger.info("Loading haiku dataset...")
             dataset = load_dataset("statworx/haiku")
         else:
-            print("Loading classic poems datasets...")
-            #   dataset1
+            self.logger.info("Loading classic poems datasets...")
             foundation_poems = load_dataset("shahules786/PoetryFoundationData")
-            #   dataset2
-            mexwell_poems = pd.read_csv(f"{kagglehub.dataset_download("mexwell/poem-dataset")}/final_df_emotions(remove-bias).csv")
+            mexwell_poems = pd.read_csv(f"{kagglehub.dataset_download('mexwell/poem-dataset')}/final_df_emotions(remove-bias).csv")
             mexwell_poems["author"] = "unknown"
             mexwell_poems = mexwell_poems[["label", "poem content", "author", "type", "age"]]
             mexwell_poems.columns = ["poem name", "content", "author", "type", "age"]
-            mexwell_poems
-            #   dataset3
-            abiemo_poems = pd.read_csv(f"{kagglehub.dataset_download("pkkazipeta143/americanbritishindian-emotion-poetry-dataset")}/ABIEMO_2334.csv")
+            abiemo_poems = pd.read_csv(f"{kagglehub.dataset_download('pkkazipeta143/americanbritishindian-emotion-poetry-dataset')}/ABIEMO_2334.csv")
             abiemo_poems["author"] = "unknown"
             abiemo_poems["age"] = "unknown"
             abiemo_poems = abiemo_poems[["Emotions", "poems", "author", "class", "age"]]
             abiemo_poems.columns = ["poem name", "content", "author", "type", "age"]
-            abiemo_poems
-            #   concatenate datasets
             dataset = DatasetDict()
             dataset["train"] = concatenate_datasets(
                 [
@@ -87,77 +131,88 @@ class TrainingLLM:
                     Dataset.from_pandas(abiemo_poems)
                 ]
             )
+
+        self._save_to_s3(dataset, dataset_s3_path)
+        self.logger.info("Dataset saved to S3.")
         return dataset
 
-        def tokenize_dataset(self, dataset):
-            if self.poem_type == "haiku":
-                poems_column = "text"
-            else:
-                poems_column = "content"
+    def tokenize_dataset(self, dataset):
+        poem_column = "text" if self.poem_type == "haiku" else "content"
 
-            def tokenize_function(self, tokenizer, poems_column):
-                poem = dataset[poems_column]
-                tokenizer.truncation_side = "left"
-                tokenized_inputs = tokenizer(
-                    poem,
-                    return_tensors="pt",
-                    truncation=True,
-                    padding=True,
-                    max_length=512
-                )
-                return tokenized_inputs
+        def tokenize_function(batch):
+            return self.tokenizer(batch[poem_column], truncation=True, padding="max_length", max_length=512)
 
-            tokenized_dataset = dataset["train"].map(
-                lambda x: tokenize_function(x, self.tokenizer, poems_column),
-                batched=True
-            )
+        self.logger.info("Tokenizing dataset...")
+        return dataset["train"].map(tokenize_function, batched=True)
 
-            return tokenized_dataset
+    def training_preparation(self):
+        data_collator = DataCollatorForLanguageModeling(
+            tokenizer=self.tokenizer,
+            mlm=False,
+            return_tensors="pt"
+        )
+        training_args = TrainingArguments(
+            output_dir=f"{self.s3_uri}/phoetry/tmp/{self.poem_type}",   # output directory for model checkpoints
+            do_eval=False,                                              # evaluate every few steps
+            learning_rate=5e-5,                                         # learning rate for optimizer
+            per_device_train_batch_size=2,                              # batch size for training
+            num_train_epochs=2,                                         # number of training epochs
+            save_steps=5000,                                            # save checkpoints every 10,000 steps
+            save_total_limit=2,                                         # only keep the 2 most recent checkpoints
+            logging_dir=f"{self.s3_uri}/phoetry/logs/{self.poem_type}", # directory to save logs
+            logging_steps=500,                                          # log every 500 steps
+            report_to=None,
+            no_cuda=False,                                              # If False, forces GPU usage (set True if you want CPU)
+            fp16=True                                                   # Use mixed precision for speedup (if using GPU)
+        )
 
-        def training_preparation(self):
-            # DATA PREPARATION
-            data_collator = DataCollatorForLanguageModeling(
-                tokenizer=self.tokenizer,
-                return_tensors='pt',
-                mlm=False
-            )
-  
-            # TRAINING ARGUMENTS
-            training_args = TrainingArguments(
-                output_dir=self.save_dir,                   # output directory for model checkpoints
-                do_eval=False,                              # evaluate every few steps
-                learning_rate=5e-5,                         # learning rate for optimizer
-                per_device_train_batch_size=2,              # batch size for training
-                num_train_epochs=2,                         # number of training epochs
-                save_steps=10_000,                          # save checkpoints every 10,000 steps
-                save_total_limit=5,                         # only keep the 2 most recent checkpoints
-                logging_dir="./logs",                       # directory to save logs
-                logging_steps=500,                          # log every 500 steps
-                report_to=None,
-                no_cuda=False,                              # If False, forces GPU usage (set True if you want CPU)
-                fp16=True                                   # Use mixed precision for speedup (if using GPU
-                )
+        return training_args, data_collator
 
-            return data_collator, training_args
+    def train(self, tokenized_dataset):
+        training_args, data_collator = self.training_preparation()
+        trainer = CausalLMTrainer(
+            model=self.model,
+            tokenizer=self.tokenizer,
+            args=training_args,
+            train_dataset=tokenized_dataset,
+            data_collator=data_collator
+        )
+        self.logger.info("Starting training...")
+        trainer.train()
+        self.logger.info("Training complete.")
 
-        def train_model(self, tokenized_dataset):
-            data_collator, training_args = TrainingLLM(self.poem_type).training_preparation()
-            print("Starting training...")
-            trainer = CausalLMTrainer(
-                model=self.model,
-                args=training_args,
-                train_dataset=tokenized_dataset,
-                data_collator=data_collator
-            )
-            trainer.train()
-            print("Training complete!")
-        
-        def save_trained_model(self): #modifier pour sauvegarder dans s3
-            print("Saving model to:", self.save_dir)
-            self.model.save_pretrained(SAVE_DIR)
-            self.tokenizer.save_pretrained(SAVE_DIR)
-            print("Saving complete!")
+    def save_model(self):
+        model_s3_dir = f"{self.s3_uri}/phoetry/models_finetuned/{self.poem_type}"
+        self.logger.info(f"Saving model to {model_s3_dir} on S3...")
 
+        files = []
 
-            
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self.model.save_pretrained(tmpdir)
+            self.tokenizer.save_pretrained(tmpdir)
+
+            for file in os.listdir(tmpdir):
+                local_path = os.path.join(tmpdir, file)
+                remote_path = f"{model_s3_dir}/{file}"
+                self.fs.put(local_path, remote_path)
+                files.append(file)
+                self.logger.debug(f"Uploaded {local_path} to {remote_path}")
+
+        metadata = {
+            "name": f"gpt2-{self.poem_type}",
+            "description": f"GPT-2 model fine-tuned for generating {self.poem_type} poems",
+            "version": "1.0",
+            "status": "trained",
+            "date_of_release": datetime.utcnow().isoformat(),
+            "URL": model_s3_dir,
+            "files": files
+        }
+
+        json_path = os.path.join(tmpdir, f"{self.poem_type}_metadata.json")
+        with open(json_path, "w") as f:
+            json.dump(metadata, f, indent=4)
+
+        metadata_s3_path = f"{model_s3_dir}/{self.poem_type}_metadata.json"
+        self.fs.put(json_path, metadata_s3_path)
+        self.logger.info(f"Metadata JSON saved to {metadata_s3_path}")
 
