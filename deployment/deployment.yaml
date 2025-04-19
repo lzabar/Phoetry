@@ -1,0 +1,22 @@
+#| filename: "deployment/deployment.yaml"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoetry-deployment
+  labels:
+    app: phoetry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: phoetry
+  template:
+    metadata:
+      labels:
+        app: phoetry
+    spec:
+      containers:
+      - name: phoetry
+        image: paultoudret/phoetry:latest
+        ports:
+        - containerPort: 8000
