@@ -8,9 +8,11 @@ RUN apt-get -y update && \
 
 # Install project dependencies
 COPY requirements.txt .
-COPY app ./app
-
 RUN pip install -r requirements.txt
 
+COPY app ./app
 COPY src ./src
+
+RUN chmod +x ./app/run.sh
+
 CMD ["bash", "-c", "./app/run.sh"]
