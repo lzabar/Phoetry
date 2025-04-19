@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-WORKDIR ${HOME}/Phoetry
+
 # Install Python
 
 RUN apt-get -y update && \
