@@ -1,5 +1,5 @@
-import tempfile
 import os
+import tempfile
 import logging
 import joblib
 import s3fs
@@ -66,8 +66,17 @@ class TrainingLLM:
 
         if self._s3_exists(gpt2_s3_path):
             self.logger.info(f"Loading model and tokenizer from {gpt2_s3_path} on S3...")
-            model = GPT2LMHeadModel.from_pretrained(gpt2_s3_path)
-            tokenizer = GPT2Tokenizer.from_pretrained(gpt2_s3_path)
+
+            with tempfile.TemporaryDirectory() as tmpdir:
+                files = self.fs.ls(gpt2_s3_path, detail=False)
+                for file_path in files:
+                    filename = os.path.basename(file_path)
+                    local_path = os.path.join(tmpdir, filename)
+                    self.fs.get(file_path, local_path)
+
+                model = GPT2LMHeadModel.from_pretrained(tmpdir)
+                tokenizer = GPT2Tokenizer.from_pretrained(tmpdir)
+
         else:
             self.logger.info("Model and tokenizer not found on S3. Downloading from HuggingFace...")
             model = GPT2LMHeadModel.from_pretrained("gpt2")
