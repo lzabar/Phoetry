@@ -1,9 +1,6 @@
 import requests
 import os
 import time
-
-import numpy as np
-
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
 
 
@@ -65,7 +62,7 @@ class PoemModel:
             return None
 
         # Checking the all keys are in the config file
-        if self.check_dico() is False:      # Not all keys in self.dico
+        if self.check_dico() is False:                              # Not all keys in self.dico
             print('Config : Fail --> keys')
             return None
         else:
@@ -77,7 +74,7 @@ class PoemModel:
             bucket_URL = self.dico['URL']
 
             # We download every file in the list
-            i = 1      # only for printing
+            i = 1                                              # only for printing
             for file in self.dico['files']:
                 if os.path.exists(self.local_dir + file):      # checking that file is  already downloaded
                     print(f"Already downloaded : [{i}/{len(self.dico['files'])}] Success --> {file}")
@@ -107,7 +104,6 @@ class PoemModel:
             self.model.eval()
             end = time.time()
             delta = round(abs(end - start), 1)
-
 
             print('----------------------------------------------')
             print(f'Initialization : Complete in {delta} sec --> Model is running')
@@ -150,18 +146,12 @@ class PoemModel:
         """
         Take in input the poet_gpt2 model path, its parameters and a theme and generate a poem.
         """
-        start_of_promt = [
-            "For I am the",
-            "I only I could have the",
-            "Then we see the"
-        ]
-        #n = np.random.randint(0, len(start_of_promt))
-        prompt = start_of_promt[0] + theme + ','
+        prompt = theme
 
         inputs = self.tokenizer.encode(
             prompt,
             return_tensors="pt",
-            )
+        )
 
         # Generate text
         output = self.model.generate(
@@ -176,4 +166,5 @@ class PoemModel:
 
         # Decode and print the poem
         poem = self.tokenizer.decode(output[0], skip_special_tokens=True)
+        poem = poem[len(prompt):].strip()
         return poem

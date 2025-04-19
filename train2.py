@@ -1,4 +1,4 @@
-import os
+import argparse
 from datasets import load_dataset
 from transformers import GPT2Tokenizer, GPT2LMHeadModel, TrainingArguments, DataCollatorForLanguageModeling
 from src.training_setup import TrainingLLM
@@ -10,20 +10,20 @@ parser.add_argument("--poem_type", type=str, help="Poem type between 'haiku' and
 args = parser.parse_args()
 
 # Set up training
-training_setup=TrainingLLM(args.poem_type)
+training_setup = TrainingLLM(args.poem_type)
 
 # Retrieve dataset
 # if not in s3:
-poems=training_setup.retrieve_datasets()
-#else poems=link to s3 datasets relative to the poem type
+poems = training_setup.retrieve_datasets()
+# else poems=link to s3 datasets relative to the poem type
 
-#tokenize dataset
-tokenized_poems=training_setup.tokenize_dataset(poems)
+# tokenize dataset
+tokenized_poems = training_setup.tokenize_dataset(poems)
 
-#train model
+# train model
 training_setup.train_model(tokenized_poems)
 
-#save model
+# save model
 training_setup.save_trained_model()
 
 

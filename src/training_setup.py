@@ -1,3 +1,6 @@
+import os
+import joblib
+import fsspec
 import kagglehub
 import pandas as pd
 from datasets import (
@@ -12,41 +15,41 @@ from transformers import (
     TrainingArguments,
     DataCollatorForLanguageModeling,
 )
-from src.set_llm import (
-    tokenize_function,
-    CausalLMTrainer
-)
 from transformers import Trainer
+
 
 class CausalLMTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
-        # Ensure we set up the labels correctly for causal language modeling
-        labels = inputs["input_ids"].clone()  # Set labels as input_ids for causal language modeling
+        """
+        Ensure we set up the labels correctly for causal language modeling
+        """
+        labels = inputs["input_ids"].clone()            # Set labels as input_ids for causal language modeling
         inputs["labels"] = labels
         outputs = model(**inputs)
-        loss = outputs.loss  # Get the loss from model outputs
+        loss = outputs.loss                             # Get the loss from model outputs
         return (loss, outputs) if return_outputs else loss
+
 
 class TrainingLLM:
     """
     A class to train the model from retrieving the dataset to fine-tune gpt-2
     """
-
-    def __init__(self,poem_type):
+    def __init__(self, poem_type):
         """
         Initialize model, tokenizer and define poem type (poem_type £ ["haiku", "classic"])
         """
 
-        self.poem_type=poem_type
-        # ENVIRONMENT CONFIGURATION ---------------------------
+        self.poem_type = poem_type
+        # ENVIRONMENT CONFIGURATION
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.save_dir = os.path.join(self.base_dir, "trained_model", "poet-gpt2",self.poem_type)
-        self.log_dir = os.path.join(self.base_dir, "logs",self.poem_type)
+        self.save_dir = os.path.join(self.base_dir, "trained_model", "poet-gpt2", self.poem_type)
+        self.log_dir = os.path.join(self.base_dir, "logs", self.poem_type)
 
-        #MODEL INITIALIZATION
+        # MODEL INITIALIZATION
         self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
         self.model = GPT2LMHeadModel.from_pretrained("gpt2")
-        # ADD TOKEN PADDING IF MISSING ---------------------------
+
+        # ADD TOKEN PADDING IF MISSING
         if self.tokenizer.pad_token is None:
             self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
             self.model.resize_token_embeddings(len(self.tokenizer))
@@ -55,7 +58,7 @@ class TrainingLLM:
         """
         To import data
         """
-        if self.poem_type=="haiku":
+        if self.poem_type == "haiku":
             print("Loading haiku dataset...")
             dataset = load_dataset("statworx/haiku")
         else:
@@ -83,15 +86,15 @@ class TrainingLLM:
                     Dataset.from_pandas(mexwell_poems),
                     Dataset.from_pandas(abiemo_poems)
                 ]
-                )
-        return dataset 
+            )
+        return dataset
 
-        
         def tokenize_dataset(self, dataset):
-            if self.poem_type="haiku":
-                poems_column="text"
+            if self.poem_type == "haiku":
+                poems_column = "text"
             else:
-                poems_column="content"
+                poems_column = "content"
+
             def tokenize_function(self, tokenizer, poems_column):
                 poem = dataset[poems_column]
                 tokenizer.truncation_side = "left"
@@ -101,24 +104,27 @@ class TrainingLLM:
                     truncation=True,
                     padding=True,
                     max_length=512
-                    )
+                )
                 return tokenized_inputs
+
             tokenized_dataset = dataset["train"].map(
                 lambda x: tokenize_function(x, self.tokenizer, poems_column),
-                batched=True)
+                batched=True
+            )
+
             return tokenized_dataset
 
         def training_preparation(self):
-            # DATA PREPARATION ---------------------------
+            # DATA PREPARATION
             data_collator = DataCollatorForLanguageModeling(
                 tokenizer=self.tokenizer,
                 return_tensors='pt',
                 mlm=False
-                )
-                
-            # TRAINING ARGUMENTS ---------------------------
+            )
+  
+            # TRAINING ARGUMENTS
             training_args = TrainingArguments(
-                output_dir=self.save_dir,                        # output directory for model checkpoints
+                output_dir=self.save_dir,                   # output directory for model checkpoints
                 do_eval=False,                              # evaluate every few steps
                 learning_rate=5e-5,                         # learning rate for optimizer
                 per_device_train_batch_size=2,              # batch size for training
@@ -131,16 +137,18 @@ class TrainingLLM:
                 no_cuda=False,                              # If False, forces GPU usage (set True if you want CPU)
                 fp16=True                                   # Use mixed precision for speedup (if using GPU
                 )
-            return data_collator,training_args
+
+            return data_collator, training_args
 
         def train_model(self, tokenized_dataset):
-            data_collator,training_args= TrainingLLM(self.poem_type).training_preparation()
+            data_collator, training_args = TrainingLLM(self.poem_type).training_preparation()
             print("Starting training...")
             trainer = CausalLMTrainer(
                 model=self.model,
                 args=training_args,
                 train_dataset=tokenized_dataset,
-                data_collator=data_collator)
+                data_collator=data_collator
+            )
             trainer.train()
             print("Training complete!")
         
