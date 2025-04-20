@@ -1,5 +1,0 @@
-{
-    "classic" : "https://minio.lab.sspcloud.fr/lzabar/phoetry/models_finetuned/classic/metadata.json",
-    "haiku" : "https://minio.lab.sspcloud.fr/lzabar/phoetry/models_finetuned/haiku/metadata.json"
-
-}
