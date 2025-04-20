@@ -1,14 +1,11 @@
-#!/usr/bin/env python3
-import os
-import json
 import argparse
 import requests
 
 from src.my_log import get_logger
 from src.poem_generator import PoemModel
 
-# SETTING LOGGER ---------------------------
 
+# SETTING LOGGER ---------------------------
 logger = get_logger(name=__name__)
 
 # READ REGISTRY VIA HTTP ---------------------------
@@ -46,10 +43,7 @@ logger.info(f"Selected model '{model_name}' → {model_url}")
 
 # INITIALIZE AND GENERATE ---------------------------
 poem_model = PoemModel(URL=model_url)
-poem = poem_model.generate_poem(
-    theme=args.theme,
-    poem_type=model_name
-)
+poem = poem_model.generate_poem(theme=args.theme)
 
 # RESULT ---------------------------
 print("\n" + "="*60)
