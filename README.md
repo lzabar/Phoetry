@@ -56,7 +56,10 @@ We use OpenAI's GPT-2 as base, which is a trained large-scale unsupervised langu
 The model is fine-tuned on poems's dataset. For the generation, the label of the input image is used as the theme of the poem, whether it's a classical english poem or an haiku.
 
 
-### 🧰3. Built with
+### 3. Disclaimer
+The poems are a little wonky.
+
+### 🧰4. Built with
 * logiciel 1
 * logiciel 2...
 
@@ -73,8 +76,37 @@ Points of improvement:
 
 <!-- User's guide -->
 ## 📄II. User's guide
-### 🧬1. Project's structure
-#### 📂1.1 Structure of repository
+### 🧬1. How to use
+#### 1.1 Simply via an URL
+
+The API is accessible at : ....
+The interface is intuitive but here are the instructions :
+- Click on generate poems
+- Upload a photo with .jpg format
+- Chose a theme
+- Click on generate poem
+Your poem should appear in seconds
+
+
+#### 1.2 Locally
+
+You can use the API locally.
+To do so, clone the repository in python environment and go to dir "/Phoetry"
+
+Create a virtual environment simply with the command :
+`chmod +x install.sh`
+`sudo ./install.sh`
+
+Your virtual environment should install all requirements and be activated 
+
+Then, to run the API use the command
+`uvicorn app.api:app --reload --host "0.0.0.0" --port 8000`
+
+The API should start run locally on port 8000
+
+
+### 🧬2. Project's structure
+#### 📂2.1 Structure of repository
 ```
 Phoetry
   |
@@ -103,7 +135,7 @@ Phoetry
 ```
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-#### 🧺1.2 Structure of S3 bucket
+#### 🧺2.2 Structure of S3 bucket
 ```
 Phoetry
   |
@@ -121,12 +153,6 @@ Phoetry
       |- ...
   |- Image_models
 ```
-
-### 💻2. Installation
-```
-pip install -r requirements.txt
-```
-...
 
 
 ### 👨‍💻3. Developer's guide
@@ -152,74 +178,3 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-1 Presentation du projet
-
-Version : 1.0
-Main features :
-- Prend une image / thèmes possibles / Poemes générés (anglais + haiku)
-
-  1.1 Detail reconnaissance d'image
-  1.2 Detail generation de poem
-
-  Disclaimer
-
-  Future developpement
-  
-2 Comment utiliser (Docker, kuber ? Api)
-Local / Pas local
-
-3 Cote developpeur : how to train
-  fichier de config.json
-
-
-
-# Phoetry
-
-
-
-## 1. Image recognition
-To identify specific objects in an image. Our focus here is nature (but can be changed according to preferences)
-```
-from src.image_recognition import image_label_detector
-
-#Proposed labels
-labels=["tree","flower","sunset","sunrise","cloud","mountain","beach","river","lake","waterfall","forest","grassland","desert","rain","snow",
-                   "road","traffic jam","hill","valley","cave","farm","garden","coastline","field","pond","sky","animal","insect","fungi",
-                   "leaf","pebble","stone", "dog", "cat","bird","butterfly","bee", "stars","moon","sun"]
-image_path="path/image.jpg"
-top3_predicted_labels=image_label_detector(image_path,labels)
-print(top3_predicted_labels)
-```
-## 2. Poem generation
-To identify specific objects in an image. Our focus here is nature (but can be changed according to preferences)
-```
-from src.poem_generator import poem_generator
-
-poem=poem_generator(model_path=model_path, theme="poem_theme", 
-          max_length=200,  temperature=0.5,  top_k=60, top_p=0.9, repetition_penalty=1.5)
-print(poem)
-```
-
-## Make sure to install the requirements
-```
-pip install -r requirements.txt
-```
-## Disclaimer
-The poems are a little wonky.
-Points of improvement:
-- Enrich the datasets with more poems
-- Readjust the parameters for the fine-tuning of gpt2
-- Readjust parameters for the poem generator
-- Maybe create an API
-
-#### Ideas to improve the poem generator:
-Create a system to measure the quality of the poem:
-- Check if all the words in the generated poem are in the english dictionnary and fix a threshold (ex: acceptable if 1% of the words in the poem are
- not in the dictionnary)
-- Create an inverse model which identifies the theme of the poem based on the content, calculate similarity between predicted theme and true theme 
-and fix a threhold (ex: acceptable if similarity (predictied_theme, true_theme)>=50%)
-- Create a poem quality index such as:
-    index ={1 if threshold_dico<=1% and similarity (predictied_theme, true_theme)>=50, else 0}
-- Readjust generator parameters, generate 100 poems based on different themes and evaluates their poem quality index (proportion of poems with an
-index=1)
-- Keep readjusting to improve the proportion of poems with an index=1

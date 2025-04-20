@@ -8,9 +8,9 @@ apt-get install -y python3-pip python3-venv
 
 # Create empty virtual environment
 
-python3 -m venv titanic
+python3 -m venv phoetry
 
-source titanic/bin/activate
+source phoetry/bin/activate
 
 # Install project dependencies
 
