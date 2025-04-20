@@ -2,7 +2,8 @@ import os
 import json
 import requests
 
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
+import uuid
 from pydantic import BaseModel
 
 from src.my_log import get_logger
@@ -99,3 +100,16 @@ def gen_poem(model_name: str, theme: str):
 
     else:
         return {"message": f"Modèle '{model_name}' not available"}
+
+
+@app.post("/upload/")
+async def create_upload(file: UploadFile = File(...)):
+
+    file.filename = f"{uuid.uuid4}.jpg"
+    contents = await file.read()
+
+    with open(f"../data/image/{file.filename}", "wb") as f:
+        f.write(contents)
+
+    return {"filename": file.filename}
+    
