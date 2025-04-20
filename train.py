@@ -1,16 +1,9 @@
-import os
 import argparse
+from src.training_setup2 import TrainingLLM
 
-from src.training_setup import TrainingLLM
-from src.my_log import get_logger
-
-
-# SET LOGGER ---------------------------
-logger = get_logger(name=__name__)
 
 # PATH TO BUCKET ---------------------------
-BUCKET_NAME = os.environ["BUCKET_NAME"]
-s3_uri = f"s3://{BUCKET_NAME}"
+s3_uri = "s3://lzabar"
 
 # POEM CHOICE ---------------------------
 parser = argparse.ArgumentParser(description="Specify type of poem")
