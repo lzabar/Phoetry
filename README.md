@@ -79,7 +79,8 @@ Points of improvement:
 ### 🧬1. How to use
 #### 1.1 Simply via an URL
 
-The API is accessible at : ....
+The API is accessible at : [phoetry](http://phoetry.lab.sspcloud.fr/)
+ 
 The interface is intuitive but here are the instructions :
 - Click on generate poems
 - Upload a photo with .jpg format
@@ -88,21 +89,38 @@ The interface is intuitive but here are the instructions :
 Your poem should appear in seconds
 
 
-#### 1.2 Locally
+#### 1.2 Locally (and maybe faster to get poems)
 
-You can use the API locally.
-To do so, clone the repository in python environment and go to dir "/Phoetry"
+You can use the API locally. To do so, you have two solutions :
 
-Create a virtual environment simply with the command :
-`chmod +x install.sh`
-`sudo ./install.sh`
+##### 1.2.1 Docker Hub
+An image of the project is accessible at : [Docker Hub](https://hub.docker.com/repository/docker/paultoudret/phoetry/general)
 
-Your virtual environment should install all requirements and be activated 
+ We suggest you to use the latest version of the API (currently v0.1.0)
+ 
+ 
+ ##### 1.2.2 Git Clone
 
-Then, to run the API use the command
-`uvicorn app.api:app --reload --host "0.0.0.0" --port 8000`
+Clone the repository in python environment and go to dir "/Phoetry"
+ 
+Create a virtual environment simply with the command : 
+```
+chmod +x install.sh
+sudo ./install.sh
+```
+Your virtual environment should install all requirements and be activated !
+ 
+Then, to run the API use the command :
+```
+uvicorn app.api:app --reload --host "0.0.0.0" --port 8000
+```
+The API should start run locally on port 8000. Follow the link and play !
 
-The API should start run locally on port 8000
+
+#### 1.3 To keep in mind
+The documentation of the API is accessible via the requests "/docs"
+
+ See the documentation of FastAPI for more ino : [FastAPI](https://fastapi.tiangolo.com/)
 
 
 ### 🧬2. Project's structure
@@ -133,7 +151,6 @@ Phoetry
   |- requirements.txt
   |- train.py
 ```
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 #### 🧺2.2 Structure of S3 bucket
 ```
@@ -154,16 +171,46 @@ Phoetry
   |- Image_models
 ```
 
+### 👨‍💻3. Developper and DataScientist's guide
 
-### 👨‍💻3. Developer's guide
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+
+#### 3.1 Integration
+The integration of the project is based on the repository : [integration-repository](https://github.com/lzabar/Phoetry)
+ 
+A push to main leads to the creation of a new docker image. We suggest to use the dev branche for developpement. 
+
+To push a new version of application you should use the command below (after commit) :
+```
+git tag v0.0.0
+git push --tags
+```
+
+#### 3.2 Deployment
+The deployment of the application is based on the repository : [deployment-repository](https://github.com/PaulToudret/phoetry_deployment)
+
+To deploy a version of the application you only have to to modify the file deployment.yaml and set the version you want.
+
+
+
+#### 3.3 Training a model
 To run the training script on SSPCloud, you need to define the `BUCKET_NAME` environment variable:
 
 ```
 export BUCKET_NAME={your_sspcloud_id}
 python train.py
 ```
+
+#### 3.4 Documentation
+A documentation of the application is accessible thanks to [pdoc](https://pdoc.dev/)
+
+To get the documentation of the application you only need to run the command :
+```
+pdoc src
+```
+As an exemple to get docuementation of src/files
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- Contributions -->
 ## 🧑‍🤝‍🧑III. Contributions
