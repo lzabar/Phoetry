@@ -30,6 +30,5 @@ jobs:
         with:
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: |
-              paultoudret/phoetry:latest
-              paultoudret/phoetry:dev
+          tagtags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
