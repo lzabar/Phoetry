@@ -1,8 +1,14 @@
 import os
 import json
 import requests
+from typing import Union
 
-from fastapi import FastAPI, File, UploadFile
+from io import BytesIO
+from PIL import Image
+
+from fastapi import FastAPI, File, UploadFile, Form
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, FileResponse
 import uuid
 from pydantic import BaseModel
 
@@ -16,6 +22,9 @@ app = FastAPI()
 # SETTING LOGGER
 logger = get_logger(name=__name__)
 
+clip_model = SetClipModel()
+
+
 # GETTING FROM S3 THE AVAILABLE MODEL
 URL = "https://minio.lab.sspcloud.fr/paultoudret/ensae-reproductibilite/Phoetry/Poem_models/model_available.json"
 
@@ -23,6 +32,16 @@ response = requests.get(URL)
 if response.status_code == 200:
     logger.info("Download : Success --> Available Models")
     available_models = response.json()
+else:
+    logger.error(f"Download : Fail --> Available Models : error {response.status_code}")
+
+
+URL = "https://minio.lab.sspcloud.fr/paultoudret/ensae-reproductibilite/Phoetry/Labels/labels.json"
+
+response = requests.get(URL)
+if response.status_code == 200:
+    logger.info("Download : Success --> Labels")
+    labels = response.json()
 else:
     logger.error(f"Download : Fail --> Available Models : error {response.status_code}")
 
@@ -36,7 +55,16 @@ for key in available_models.keys():
 models = {}
 
 
-### CODE TO CHANGE 
+### CODE POUR L'API
+
+@app.get("/", response_class=HTMLResponse)
+def homepage():
+    return FileResponse("static/index.html")
+
+@app.get("/g", response_class=HTMLResponse)
+def gener_page():
+    return FileResponse("static/generateur.html")
+
 
 
 @app.get("/")
@@ -47,42 +75,28 @@ def read_root():
     return {"Welcome to Phoetry"}
 
 
-@app.get("/available")
+@app.get("/available_models")
 def read_model_available():
     logger.info("GET : /available")
     return model_status
 
 
-
-
-@app.get("/init_model/{model_name}")
-def init_model(model_name):
-
-    if model_name in available_models.keys():
-
-        poem_model = PoemModel(available_models[model_name])
-        models[poem_model.name] = poem_model
-
-        if model_status[model_name] == 'Initialized':
-            return {
-                f"Model {model_name}": "Valid",
-                f"Model {model_name}": "Already initialized, ready to run"
-            }
-        else:
-            model_status[model_name] = "Initialized"
-            return {
-                f"Model {model_name}": "Valid",
-                f"Model {model_name}": "Initialized, ready to run"
-            }
-
-    else:
-        return {"message": f"Modèle '{model_name}' not available"}
+@app.get("/available_themes")
+def get_available_themes():
+    logger.info("GET : /available")
+    return list(labels.keys())
 
 
 
+@app.post("/generate_poem_from_image/")
+async def create_upload(
+    file: UploadFile = File(...),
+    theme: str = Form(...),
+    model_name: str = Form(...)
+):
 
-@app.get("/generate_poem/{model_name}/{theme}")
-def gen_poem(model_name: str, theme: str):
+    contents = await file.read()
+    image = Image.open(BytesIO(contents))
 
     if model_name in available_models.keys():
         logger.debug("model name is available")
@@ -91,25 +105,20 @@ def gen_poem(model_name: str, theme: str):
             logger.debug("model name is in models")
             poem_model = models[model_name]
 
-            poem = poem_model.generate_poem(theme=theme)
-            logger.debug(f"longueur du poeme : {len(poem)}")
+        else:
+            poem_model = PoemModel(available_models[model_name])
+            models[poem_model.name] = poem_model
 
-            return {
-                "Poem": poem
-            }
+        predicted_word = clip_model.find_word(image, labels[theme])
+
+        poem = poem_model.generate_poem(theme=predicted_word)
+        
+        return {"predicted_word": predicted_word, "poem": poem}
 
     else:
-        return {"message": f"Modèle '{model_name}' not available"}
-
-
-@app.post("/upload/")
-async def create_upload(file: UploadFile = File(...)):
-
-    file.filename = f"{uuid.uuid4}.jpg"
-    contents = await file.read()
-
-    with open(f"../data/image/{file.filename}", "wb") as f:
-        f.write(contents)
-
-    return {"filename": file.filename}
+        return {
+             "model": model_name + "not available"
+        }
     
+
+app.mount("/static", StaticFiles(directory="static"), name="static")

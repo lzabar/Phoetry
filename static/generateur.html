@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Générateur de Poèmes</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <h1>Générateur de Poèmes</h1>
+
+  <form id="poemForm">
+    <label for="fileInput">Uploader une image :</label><br />
+    <input type="file" id="fileInput" accept="image/*" /><br /><br />
+
+    <img id="preview" src="#" alt="Aperçu de l’image" style="display: none; max-height: 200px;" /><br /><br />
+
+    <label for="themeSelect">Choisir un thème :</label><br />
+    <select id="themeSelect"></select><br /><br />
+
+    <label for="modelUsed">Choisir un modèle :</label><br />
+    <select id="modelUsed"></select><br /><br />
+
+    <button type="button" onclick="generatePoem()">Générer un poème</button>
+  </form>
+
+  <div id="resultSection" style="margin-top: 30px;">
+    <h2>Mot identifié :</h2>
+    <p id="predictedWord">—</p>
+    
+    <h2>Poème généré :</h2>
+    <pre id="poemOutput">—</pre>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

@@ -153,7 +153,7 @@ class PoemModel:
             logger.debug(f'but found {self.dico.keys()}')
             return False
 
-    def generate_poem(self, theme: str, poem_type: str):
+    def generate_poem(self, theme: str):
         """
         Generate a poem based on a theme and poem type.
         The parameters from each type are automatically loaded from the JSON config.

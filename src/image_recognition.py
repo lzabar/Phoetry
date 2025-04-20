@@ -31,15 +31,13 @@ class SetClipModel:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"Clip Model {model_id} initialized and running")
 
-    def create_label_tokens(self, labels):
+
+    def find_word(self, image, labels):
         """
-        Take a list of labels from the labels dico.json
-        Uses the model to get a score 
+        
         """
-        # generate sentences
-        clip_labels = [f"a photo of a {label}" for label in labels]
         label_tokens = self.processor(
-            text=clip_labels,
+            text=labels,
             padding=True,
             images=None,
             return_tensors="pt"
@@ -50,15 +48,7 @@ class SetClipModel:
 
         # detach from pytorch gradient computation
         label_emb = label_emb.detach().cpu().numpy()
-        
-        return label_emb
 
-    # Predict label function
-    def image_label_detector(self, image_path, labels):
-        """
-        Take the image path in input and predict the 3 most probable labels
-        """
-        image = mpimg.imread(image_path)  # Load image
         processed_image = self.processor(  # Process image
             text=None,
             images=image,
@@ -69,15 +59,14 @@ class SetClipModel:
             self.model.get_image_features(processed_image).detach().cpu().numpy()
         )  # embedding
 
+         
         scores = np.dot(
             image_emb, 
-            SetClipModel().create_label_tokens(labels).T
+            label_emb.T
             )  # predicted lables scores (among the 39 original labels)
 
         top3_scores_indexes = list(np.argsort(scores)[0][-3:,][::-1])
         top3labels = np.array(labels)[top3_scores_indexes].tolist()
 
-        # choose label
-        num_label = np.random.randint(0, 3)
+        return top3labels[0]
 
-        return top3labels[num_label]
