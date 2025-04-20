@@ -1,0 +1,19 @@
+{
+    "arg_poem_gpt": {
+        "haiku": {
+            "max_length": 50,
+            "temperature": 0.5,
+            "top_k": 60,
+            "top_p": 0.9,
+            "repetition_penalty": 1.2
+        },
+        "classic": {
+            "max_length": 200,
+            "temperature": 0.5,
+            "top_k": 60,
+            "top_p": 0.9,
+            "repetition_penalty": 1.5
+        }
+    }
+  }
+  

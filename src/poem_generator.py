@@ -142,7 +142,7 @@ class PoemModel:
         Generate a poem based on a theme and poem type.
         The parameters from each type are automatically loaded from the JSON config.
         """
-        params = self.dico.get("poem_gpt_params", {})
+        params = self.dico.get("arg_poem_gpt", {})
         if poem_type not in params:
             raise ValueError(f"Poem type '{poem_type}' not found in configuration file.")
 
