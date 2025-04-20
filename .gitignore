@@ -18,6 +18,7 @@ CACHEDIR.TAG
 pyvenv.cfg
 trained_model/
 mlruns/
+s3:/
 
 # Ignore project directories
 Include/
