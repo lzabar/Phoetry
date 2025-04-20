@@ -47,11 +47,11 @@
 The aim of the project if to generate a poem based on what's on the picture. There are two main parts on the project:
 
 ### 🖼️1. Image recognition
-We use OpenAI's Clip model for image recognition which is a neural network which learns visual concepts from natural language supervision ([https://openai.com/index/clip/](OpenAI's CLIP)). It take in input an image and classify it based on provided labels.
+We use OpenAI's Clip model for image recognition which is a neural network which learns visual concepts from natural language supervision ([OpenAI's CLIP](https://openai.com/index/clip/)). It take in input an image and classify it based on provided labels.
 Here we focus on nature-related and food-related images and the final label of the image is one of the top 3 most probable labels for the image.
 
 ### 📜2. Poem generation 
-We use OpenAI's GPT-2 as base, which is a trained large-scale unsupervised language model, which generates coherent paragraphs of text([https://openai.com/index/better-language-models/](OpenAI's GPT-2)). We use GPT-2 as it is fully open source with no API costs and have low hardware requirements, even though recent versions (GPT-3, GPT-4) are more efficient.
+We use OpenAI's GPT-2 as base, which is a trained large-scale unsupervised language model, which generates coherent paragraphs of text ([OpenAI's GPT-2 ](https://openai.com/index/better-language-models/)). We use GPT-2 as it is fully open source with no API costs and have low hardware requirements, even though recent versions (GPT-3, GPT-4) are more efficient.
 The model is fine-tuned on poems's dataset. For the generation, the label of the input image is used as the theme of the poem, whether it's a classical english poem or an haiku.
 
 
