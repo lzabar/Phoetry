@@ -5,18 +5,20 @@ Faire un truc joli (mettre des images)``Licence
 S3 Bucket
 
 Phoetry
-|
-|- Datasets
-|- Peom_models
-    |- model_available.jon
-    |- gpt2_en_poems
-        |- gpt2_en_poems.json
-        |- ...
-    |- gpt2_en_haiku
-        |- gpt_en_haiku.json
-        |- ...
-    |- ...
-|- Image_models
+  |
+  |- Datasets
+      |- labels.json
+      |- other datasets...
+  |- Poem_models
+      |- model_available.json  -> --
+      |- gpt2_en_poems              |
+          |- gpt2_en_poems.json   <-    
+          |- ...                    |
+      |- gpt2_en_haiku              |
+          |- gpt_en_haiku.json    <-
+          |- ...
+      |- ...
+  |- Image_models
 
 1 Presentation du projet
 

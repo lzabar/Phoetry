@@ -32,19 +32,10 @@ model_status = {}
 for key in available_models.keys():
     model_status[key] = "Not initialized"
 
+models = {}
 
 
 ### CODE TO CHANGE 
-
-
-
-class ModelRequest(BaseModel):
-    model_name: str
-
-
-class PoemRequest(BaseModel):
-    model_name: str
-    theme: str
 
 
 @app.get("/")
@@ -63,19 +54,48 @@ def read_model_available():
 
 
 
-@app.post("/init_model/")
-def init_model(req: ModelRequest):
+@app.get("/init_model/{model_name}")
+def init_model(model_name):
 
-    if req.model_name in available_models.keys():
+    if model_name in available_models.keys():
 
-        poem_model = PoemModel(available_models[req.model_name])
+        poem_model = PoemModel(available_models[model_name])
+        models[poem_model.name] = poem_model
 
-        if model_status[req.model_name] == 'Initialized':
+        if model_status[model_name] == 'Initialized':
             return {
-                f"Model {req.model_name}": "Valid",
-                f"Model {req.model_name}": "Already initialized, ready to run"
+                f"Model {model_name}": "Valid",
+                f"Model {model_name}": "Already initialized, ready to run"
             }
         else:
+            model_status[model_name] = "Initialized"
+            return {
+                f"Model {model_name}": "Valid",
+                f"Model {model_name}": "Initialized, ready to run"
+            }
+
+    else:
+        return {"message": f"Modèle '{model_name}' not available"}
+
+
+
+
+@app.get("/generate_poem/{model_name}/{theme}")
+def gen_poem(model_name: str, theme: str):
+
+    if model_name in available_models.keys():
+        logger.debug("model name is available")
+
+        if model_name in models.keys():
+            logger.debug("model name is in models")
+            poem_model = models[model_name]
+
+            poem = poem_model.generate_poem(theme=theme)
+            logger.debug(f"longueur du poeme : {len(poem)}")
+
+            return {
+                "Poem": poem
+            }
 
     else:
         return {"message": f"Modèle '{model_name}' not available"}
