@@ -26,6 +26,17 @@ else:
     logger.error(f"Download : Fail --> Available Models : error {response.status_code}")
 
 
+# Setting a dico to register the status of model
+model_status = {}
+
+for key in available_models.keys():
+    model_status[key] = "Not initialized"
+
+models = {}
+
+
+### CODE TO CHANGE 
+
 
 @app.get("/")
 def read_root():
@@ -37,15 +48,54 @@ def read_root():
 
 @app.get("/available")
 def read_model_available():
-    return available_models
+    logger.info("GET : /available")
+    return model_status
 
 
-class ModelRequest(BaseModel):
-    model_name: str
 
-@app.get("/load_model/")
-def load_model(model_name: str):
+
+@app.get("/init_model/{model_name}")
+def init_model(model_name):
+
     if model_name in available_models.keys():
-        return {"message": f"Modèle '{model_name}' reçu via GET et prêt à être initialisé"}
+
+        poem_model = PoemModel(available_models[model_name])
+        models[poem_model.name] = poem_model
+
+        if model_status[model_name] == 'Initialized':
+            return {
+                f"Model {model_name}": "Valid",
+                f"Model {model_name}": "Already initialized, ready to run"
+            }
+        else:
+            model_status[model_name] = "Initialized"
+            return {
+                f"Model {model_name}": "Valid",
+                f"Model {model_name}": "Initialized, ready to run"
+            }
+
+    else:
+        return {"message": f"Modèle '{model_name}' not available"}
+
+
+
+
+@app.get("/generate_poem/{model_name}/{theme}")
+def gen_poem(model_name: str, theme: str):
+
+    if model_name in available_models.keys():
+        logger.debug("model name is available")
+
+        if model_name in models.keys():
+            logger.debug("model name is in models")
+            poem_model = models[model_name]
+
+            poem = poem_model.generate_poem(theme=theme)
+            logger.debug(f"longueur du poeme : {len(poem)}")
+
+            return {
+                "Poem": poem
+            }
+
     else:
         return {"message": f"Modèle '{model_name}' not available"}

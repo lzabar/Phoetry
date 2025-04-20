@@ -1,0 +1,21 @@
+#| filename: "deployment/ingress.yaml"
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: phoetry-ingress
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - phoetry.lab.sspcloud.fr
+  rules:
+  - host: phoetry.lab.sspcloud.fr
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: phoetry-service
+            port:
+              number: 80
