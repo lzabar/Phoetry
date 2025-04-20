@@ -8,9 +8,9 @@ apt-get install -y python3-pip python3-venv
 
 # Create empty virtual environment
 
-python3 -m venv phoetry
+python3 -m venv env_ph
 
-source phoetry/bin/activate
+source env_ph/bin/activate
 
 # Install project dependencies
 
