@@ -182,6 +182,7 @@ class PoemModel:
 
         # do not include theme at the start of the poem
         poem = poem[len(prompt):].strip()
+        poem = re.sub(r"^\.\s*", "", poem)
         poem = poem.replace(" / ", "\n")
         poem = re.sub(r"\.(?=[A-Za-z])", ". ", poem)
         poem = re.sub(r"[^A-Za-zÀ-ÖØ-öø-ÿ0-9\.,;:!\?\-\n' ]+", "", poem)
