@@ -8,6 +8,7 @@ import json
 from datetime import datetime
 from datasets import (
     load_dataset,
+    load_from_disk,
     DatasetDict,
     concatenate_datasets,
     Dataset
@@ -72,7 +73,7 @@ class TrainingLLM:
         # add token padding if missing
         if self.tokenizer.pad_token is None:
             self.tokenizer.add_special_tokens({"pad_token": "[PAD]"})
-            self.model.resize_token_embeddings(len(self.tokenizer))
+            self.model.resize_token_embeddings(len(self.tokenizer), mean_resizing=False)
 
     def _s3_exists(self, path):
         return self.fs.exists(path)
@@ -123,39 +124,54 @@ class TrainingLLM:
         return model, tokenizer
 
     def retrieve_dataset(self):
-        dataset_s3_path = f"{self.s3_uri}/phoetry/datasets/{self.poem_type}.joblib"
+        dataset_s3_path = f"{self.s3_uri}/phoetry/datasets2/{self.poem_type}"
 
         if self._s3_exists(dataset_s3_path):
-            logger.info("Loading dataset from S3...")
-            return self._load_from_s3(dataset_s3_path)
+            logger.info("Loading dataset from S3 via save_to_disk/load_from_disk...")
+            with tempfile.TemporaryDirectory() as tmpdir:
+                self.fs.get(dataset_s3_path, tmpdir, recursive=True)
+                local_dataset_dir = os.path.join(tmpdir, self.poem_type)
+                return load_from_disk(local_dataset_dir)
 
-        logger.info("Dataset not found on S3. Downloading...")
+        logger.info("Dataset not found on S3. Downloading and preparing locally...")
+
         if self.poem_type == "haiku":
-            logger.info("Loading haiku dataset...")
             dataset = load_dataset("statworx/haiku")
         else:
             logger.info("Loading classic poems datasets...")
             foundation_poems = load_dataset("shahules786/PoetryFoundationData")
-            mexwell_poems = pd.read_csv(f"{kagglehub.dataset_download('mexwell/poem-dataset')}/final_df_emotions(remove-bias).csv")
-            mexwell_poems["author"] = "unknown"
-            mexwell_poems = mexwell_poems[["label", "poem content", "author", "type", "age"]]
-            mexwell_poems.columns = ["poem name", "content", "author", "type", "age"]
-            abiemo_poems = pd.read_csv(f"{kagglehub.dataset_download('pkkazipeta143/americanbritishindian-emotion-poetry-dataset')}/ABIEMO_2334.csv")
-            abiemo_poems["author"] = "unknown"
-            abiemo_poems["age"] = "unknown"
-            abiemo_poems = abiemo_poems[["Emotions", "poems", "author", "class", "age"]]
-            abiemo_poems.columns = ["poem name", "content", "author", "type", "age"]
-            dataset = DatasetDict()
-            dataset["train"] = concatenate_datasets(
-                [
-                    foundation_poems["train"],
-                    Dataset.from_pandas(mexwell_poems),
-                    Dataset.from_pandas(abiemo_poems)
-                ]
-            )
+            mexwell_df = pd.read_csv(f"{kagglehub.dataset_download('mexwell/poem-dataset')}/final_df_emotions(remove-bias).csv")
+            mexwell_df["author"] = "unknown"
+            mexwell_df = mexwell_df.rename(columns={
+                "label": "poem name",
+                "poem content": "content",
+                "type": "type",
+                "age": "age"
+            })[["poem name", "content", "author", "type", "age"]]
 
-        self._save_to_s3(dataset, dataset_s3_path)
+            abiemo_df = pd.read_csv(f"{kagglehub.dataset_download('pkkazipeta143/americanbritishindian-emotion-poetry-dataset')}/ABIEMO_2334.csv")
+            abiemo_df["author"] = "unknown"
+            abiemo_df["age"] = "unknown"
+            abiemo_df = abiemo_df.rename(columns={
+                "Emotions": "poem name",
+                "poems": "content",
+                "class": "type"
+            })[["poem name", "content", "author", "type", "age"]]
+
+            dataset = DatasetDict()
+            dataset["train"] = concatenate_datasets([
+                foundation_poems["train"],
+                Dataset.from_pandas(mexwell_df),
+                Dataset.from_pandas(abiemo_df)
+            ])
+
+        logger.info("Saving dataset to S3 via save_to_disk...")
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dataset.save_to_disk(tmpdir)
+            self.fs.put(tmpdir, dataset_s3_path, recursive=True)
         logger.info("Dataset saved to S3.")
+
         return dataset
 
     def tokenize_dataset(self, dataset):
