@@ -3,7 +3,7 @@ name: Construction image Docker
 on:
   push:
     branches:
-       #- main
+       - main
     tags:
       - 'v*.*.*'
 
@@ -32,4 +32,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
               paultoudret/phoetry:latest
-              paultoudret/phoetry:dev
+              
