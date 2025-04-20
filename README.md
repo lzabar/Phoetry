@@ -131,6 +131,13 @@ pip install -r requirements.txt
 ### 👨‍💻3. Developer's guide
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+To run the training script on SSPCloud, you need to define the `BUCKET_NAME` environment variable:
+
+```
+export BUCKET_NAME={your_sspcloud_id}
+python train.py
+```
+
 <!-- Contributions -->
 ## 🧑‍🤝‍🧑III. Contributions
 @kodro23
