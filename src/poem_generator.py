@@ -1,20 +1,41 @@
 import requests
 import os
 import time
-#import logging
+from src.my_log import get_logger
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
+
+
+logger = get_logger(name=__name__)
 
 
 class PoemModel:
     """
     A class to initialize a model and use it
     """
-    URL: str                    # The URL to get the info of the model
-    dico: dict                  # A dictionnary to stock informations about the model
-    local_dir: str              # The address of the local directory where to stok the model
-    name: str                   # The name of the fine tuned model. Unique to every model
-    model: GPT2LMHeadModel      # Type of model used
-    tokenizer: GPT2Tokenizer    # tokenizer used for GPT2 model
+    URL: str
+    """
+    The URL to get the info of the model
+    """
+    dico: dict
+    """
+    A dictionnary to stock informations about the model
+    """
+    local_dir: str
+    """
+    The address of the local directory where to stok the model
+    """
+    name: str
+    """
+    The name of the fine tuned model. Unique to every model
+    """
+    model: GPT2LMHeadModel
+    """
+    Type of model used
+    """
+    tokenizer: GPT2Tokenizer
+    """
+    Tokenizer used for GPT2 model
+    """
 
     def __init__(self, URL):
         """
@@ -26,35 +47,32 @@ class PoemModel:
             - Local directory where to download the model
             - Model and Tokenizer
         """
-        #self.logger = logging.getLogger(__name__)
-        #self.logger.setLevel(logging.INFO)
-
         start = time.time()
 
         self.URL = URL
-        print("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
-        print(f"Initialization : Start --> {URL}")
-        print("-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-")
+        logger.info(f"Initialization : Start --> {URL}")
 
         response = requests.get(self.URL)
 
         # Checking status
         if response.status_code == 200:     # Positive request
             self.dico = response.json()
-            print('Download : Success --> dico')
+            
         else:
-            print(f"Download : Fail --> dico : {response.status_code}")
+            logger.error(f"Download : Fail --> dico : {response.status_code}")
             return None
 
         # Checking the all keys are in the config file
-        if self.check_dico() is False:                              # Not all keys in self.dico
-            print('Config : Fail --> keys')
+        if self.check_dico() is False:      # Not all keys in self.dico
+            logger.error("Config : Fail --> keys")
             return None
         else:
-            print('Config : Success --> keys')
+            logger.info("Config : Success --> keys")
             self.name = self.dico['name']
             self.local_dir = './trained_model/' + self.name + '/'    # where the model will be stored localy
             os.makedirs(self.local_dir, exist_ok=True)
+
+            logger.info(f"local dir set to {self.local_dir}")
 
             bucket_URL = self.dico['URL']
 
@@ -62,7 +80,7 @@ class PoemModel:
             i = 1                                              # only for printing
             for file in self.dico['files']:
                 if os.path.exists(self.local_dir + file):      # checking that file is  already downloaded
-                    print(f"Already downloaded : [{i}/{len(self.dico['files'])}] Success --> {file}")
+                    logger.info(f"Already downloaded : [{i}/{len(self.dico['files'])}] Success --> {file}")
                     i += 1
                 else:
                     resp = requests.get(bucket_URL + self.name + '/' + file)
@@ -72,10 +90,10 @@ class PoemModel:
                         with open(self.local_dir + file, "wb") as f:
                             f.write(resp.content)
                             es = time.time()
-                            print(f"Download : [{i}/{len(self.dico['files'])}] Success in {round(es-st,2)}--> {file}")
+                            logger.info(f"Download : [{i}/{len(self.dico['files'])}] Success in {round(es - st, 2)}--> {file}")
                             i += 1
                     else:
-                        print(f"Download : Fail --> {file} // error : {resp.status_code}")
+                        logger.error(f"Download : Fail --> {file} // error : {resp.status_code}")
                         return None
 
         # Try to initialize the model
@@ -90,8 +108,8 @@ class PoemModel:
             end = time.time()
             delta = round(abs(end - start), 1)
 
-            print('----------------------------------------------')
-            print(f'Initialization : Complete in {delta} sec --> Model is running')
+            logger.info(f'Initialization : Complete in {delta} sec --> Model is running')
+
         except Exception as e:
             raise RuntimeError(f"Error loading model from {self.local_dir}: {e}")
 
@@ -115,8 +133,8 @@ class PoemModel:
         if keys == list(self.dico.keys()):
             return True
         else:
-            print(f'keys should be {keys}', end='\n')
-            print(f'but found {self.dico.keys()}')
+            logger.debug(f'keys should be {keys}', end='\n')
+            logger.debug(f'but found {self.dico.keys()}')
             return False
 
     def generate_poem(self, theme: str, poem_type: str):
@@ -133,7 +151,8 @@ class PoemModel:
         inputs = self.tokenizer.encode(
             theme,
             return_tensors="pt",
-        )
+            )
+        logger.info("Encoding : Success --> inputs")
 
         # Generate text
         output = self.model.generate(
@@ -141,6 +160,7 @@ class PoemModel:
             do_sample=True,
             **args
         )
+        logger.info("Generating : Success --> outputs")
 
         # Decode and print the poem
         poem = self.tokenizer.decode(output[0], skip_special_tokens=True)
@@ -148,4 +168,6 @@ class PoemModel:
         # do not include theme at the start of the poem
         poem = poem[len(theme):].strip()
 
+        logger.info("Decoding : Succes --> poem")
+        logger.info(f"Length of poem : {len(poem)}")
         return poem

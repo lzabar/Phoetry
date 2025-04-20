@@ -18,6 +18,7 @@ CACHEDIR.TAG
 pyvenv.cfg
 trained_model/
 mlruns/
+s3:/
 
 # Ignore project directories
 Include/
@@ -28,4 +29,6 @@ checkpoint-10000/
 checkpoint-13854/
 trained_mod
 
+# Ignore log.log
+log.log
 

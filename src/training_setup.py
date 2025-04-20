@@ -1,6 +1,5 @@
 import os
 import tempfile
-import logging
 import joblib
 import s3fs
 import kagglehub
@@ -18,11 +17,20 @@ from transformers import (
     GPT2LMHeadModel,
     TrainingArguments,
     DataCollatorForLanguageModeling,
+    Trainer
 )
-from transformers import Trainer
+from src.my_log import get_logger
+
+
+logger = get_logger(name=__name__)
 
 
 class CausalLMTrainer(Trainer):
+    """
+    A custom Trainer class for causal language modeling.
+    This trainer ensures that the `input_ids` are used as labels during training,
+    which is required for autoregressive (causal) language modeling.
+    """
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         """
         Ensure we set up the labels correctly for causal language modeling
@@ -38,10 +46,24 @@ class TrainingLLM:
     """
     A class to train the model from retrieving the dataset to fine-tune gpt-2
     """
-    def __init__(self, poem_type, s3_uri=None):
-        logging.basicConfig(level=logging.INFO)
-        self.logger = logging.getLogger(__name__)
+    poem_type: str
+    """
+    The type of poem to train on : haiku or classic
+    """
+    s3_uri: str
+    """
+    The base URI to the S3 bucket used to save and load models and datasets
+    """
+    model: GPT2LMHeadModel
+    """
+    The GPT-2 model to be fine-tuned
+    """
+    tokenizer: GPT2Tokenizer
+    """
+    The tokenizer corresponding to the GPT-2 model
+    """
 
+    def __init__(self, poem_type, s3_uri=None):
         self.poem_type = poem_type
         self.s3_uri = s3_uri.rstrip("/") if s3_uri else None
         self.fs = s3fs.S3FileSystem(client_kwargs={"endpoint_url": "https://minio.lab.sspcloud.fr"})
@@ -67,7 +89,7 @@ class TrainingLLM:
         gpt2_s3_path = f"{self.s3_uri}/phoetry/gpt2"
 
         if self._s3_exists(gpt2_s3_path):
-            self.logger.info(f"Loading model and tokenizer from {gpt2_s3_path} on S3...")
+            logger.info(f"Loading model and tokenizer from {gpt2_s3_path} on S3...")
 
             with tempfile.TemporaryDirectory() as tmpdir:
                 files = self.fs.ls(gpt2_s3_path, detail=False)
@@ -80,7 +102,7 @@ class TrainingLLM:
                 tokenizer = GPT2Tokenizer.from_pretrained(tmpdir)
 
         else:
-            self.logger.info("Model and tokenizer not found on S3. Downloading from HuggingFace...")
+            logger.info("Model and tokenizer not found on S3. Downloading from HuggingFace...")
             model = GPT2LMHeadModel.from_pretrained("gpt2")
             tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
@@ -94,9 +116,9 @@ class TrainingLLM:
                         remote_path = f"{gpt2_s3_path}/{file}"
                         self.fs.put(local_path, remote_path)
 
-                    self.logger.info(f"Model and tokenizer uploaded to {gpt2_s3_path} on S3.")
+                    logger.info(f"Model and tokenizer uploaded to {gpt2_s3_path} on S3.")
             except Exception as e:
-                self.logger.error(f"Error saving model and tokenizer to S3: {e}")
+                logger.error(f"Error saving model and tokenizer to S3: {e}")
 
         return model, tokenizer
 
@@ -104,15 +126,15 @@ class TrainingLLM:
         dataset_s3_path = f"{self.s3_uri}/phoetry/datasets/{self.poem_type}.joblib"
 
         if self._s3_exists(dataset_s3_path):
-            self.logger.info("Loading dataset from S3...")
+            logger.info("Loading dataset from S3...")
             return self._load_from_s3(dataset_s3_path)
 
-        self.logger.info("Dataset not found on S3. Downloading...")
+        logger.info("Dataset not found on S3. Downloading...")
         if self.poem_type == "haiku":
-            self.logger.info("Loading haiku dataset...")
+            logger.info("Loading haiku dataset...")
             dataset = load_dataset("statworx/haiku")
         else:
-            self.logger.info("Loading classic poems datasets...")
+            logger.info("Loading classic poems datasets...")
             foundation_poems = load_dataset("shahules786/PoetryFoundationData")
             mexwell_poems = pd.read_csv(f"{kagglehub.dataset_download('mexwell/poem-dataset')}/final_df_emotions(remove-bias).csv")
             mexwell_poems["author"] = "unknown"
@@ -133,7 +155,7 @@ class TrainingLLM:
             )
 
         self._save_to_s3(dataset, dataset_s3_path)
-        self.logger.info("Dataset saved to S3.")
+        logger.info("Dataset saved to S3.")
         return dataset
 
     def tokenize_dataset(self, dataset):
@@ -142,7 +164,7 @@ class TrainingLLM:
         def tokenize_function(batch):
             return self.tokenizer(batch[poem_column], truncation=True, padding="max_length", max_length=512)
 
-        self.logger.info("Tokenizing dataset...")
+        logger.info("Tokenizing dataset...")
         return dataset["train"].map(tokenize_function, batched=True)
 
     def training_preparation(self):
@@ -177,13 +199,16 @@ class TrainingLLM:
             train_dataset=tokenized_dataset,
             data_collator=data_collator
         )
-        self.logger.info("Starting training...")
+        logger.info("Starting training...")
         trainer.train()
-        self.logger.info("Training complete.")
+        logger.info("Training complete.")
 
     def save_model(self):
+        model_name = f"gpt2_en_{self.poem_type}"
         model_s3_dir = f"{self.s3_uri}/phoetry/models_finetuned/{self.poem_type}"
-        self.logger.info(f"Saving model to {model_s3_dir} on S3...")
+        base_dir = os.path.dirname(model_s3_dir)
+
+        logger.info(f"Saving model to {model_s3_dir} on S3...")
 
         files = []
 
@@ -196,23 +221,24 @@ class TrainingLLM:
                 remote_path = f"{model_s3_dir}/{file}"
                 self.fs.put(local_path, remote_path)
                 files.append(file)
-                self.logger.debug(f"Uploaded {local_path} to {remote_path}")
+                logger.debug(f"Uploaded {local_path} to {remote_path}")
 
-        metadata = {
-            "name": f"gpt2-{self.poem_type}",
-            "description": f"GPT-2 model fine-tuned for generating {self.poem_type} poems",
-            "version": "1.0",
-            "status": "trained",
-            "date_of_release": datetime.utcnow().isoformat(),
-            "URL": model_s3_dir,
-            "files": files
-        }
+            logger.info(f"Model and tokenizer successfully uploaded to {model_s3_dir}")
 
-        json_path = os.path.join(tmpdir, f"{self.poem_type}_metadata.json")
-        with open(json_path, "w") as f:
-            json.dump(metadata, f, indent=4)
+            metadata = {
+                "name": model_name,
+                "description": f"GPT-2 model fine-tuned for generating {self.poem_type} poems",
+                "version": "1.0",
+                "status": "trained",
+                "date_of_release": datetime.utcnow().isoformat(),
+                "URL": base_dir,
+                "files": files
+            }
 
-        metadata_s3_path = f"{model_s3_dir}/{self.poem_type}_metadata.json"
-        self.fs.put(json_path, metadata_s3_path)
-        self.logger.info(f"Metadata JSON saved to {metadata_s3_path}")
+            json_path = os.path.join(tmpdir, f"{self.poem_type}_metadata.json")
+            with open(json_path, "w") as f:
+                json.dump(metadata, f, indent=4)
 
+            metadata_s3_path = f"{model_s3_dir}/metadata.json"
+            self.fs.put(json_path, metadata_s3_path)
+            logger.info(f"Metadata JSON saved to {metadata_s3_path}")

@@ -2,9 +2,6 @@ import argparse
 import logging
 from src.training_setup2 import TrainingLLM
 
-# LOGGER CONFIGURATION ---------------------------
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 # PATH TO BUCKET ---------------------------
 s3_uri = "s3://lzabar"
@@ -34,5 +31,3 @@ training_setup.train(tokenized_poems)
 
 # SAVING THE FINETUNED MODEL ---------------------------
 training_setup.save_model()
-
-logger.info(f"Fine-tuning of {args.poem_type} model complete. Model and tokenizer saved to S3.")
