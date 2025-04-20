@@ -1,9 +1,14 @@
 import requests
+import re
 import os
 import time
+import logging
 from src.my_log import get_logger
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
 
+
+# disable transformers warnings
+logging.getLogger("transformers").setLevel(logging.ERROR)
 
 logger = get_logger(name=__name__)
 
@@ -74,6 +79,17 @@ class PoemModel:
 
             logger.info(f"local dir set to {self.local_dir}")
 
+            parent_url = self.URL.rsplit('/', 2)[0] + '/'
+            params_url = parent_url + "model_params.json"
+            logger.info(f"Loading generation params from {params_url}")
+            resp2 = requests.get(params_url)
+            resp2.raise_for_status()
+            gen_conf = resp2.json()
+            try:
+                self.generation_params = gen_conf["params"][self.name]
+            except KeyError:
+                raise KeyError(f"No generator configuration for model '{self.name}' in model_params.json")
+
             bucket_URL = self.dico['URL']
 
             # We download every file in the list
@@ -142,14 +158,13 @@ class PoemModel:
         Generate a poem based on a theme and poem type.
         The parameters from each type are automatically loaded from the JSON config.
         """
-        params = self.dico.get("arg_poem_gpt", {})
-        if poem_type not in params:
-            raise ValueError(f"Poem type '{poem_type}' not found in configuration file.")
+        args = self.generation_params
 
-        args = params[poem_type]
+        # poem_type = self.name.split("_")[-1]
+        prompt = f"{theme} —\n"
 
         inputs = self.tokenizer.encode(
-            theme,
+            prompt,
             return_tensors="pt",
             )
         logger.info("Encoding : Success --> inputs")
@@ -166,7 +181,17 @@ class PoemModel:
         poem = self.tokenizer.decode(output[0], skip_special_tokens=True)
 
         # do not include theme at the start of the poem
-        poem = poem[len(theme):].strip()
+        poem = poem[len(prompt):].strip()
+        poem = poem.replace(" / ", "\n")
+        poem = re.sub(r"\.(?=[A-Za-z])", ". ", poem)
+        poem = re.sub(r"[^A-Za-zÀ-ÖØ-öø-ÿ0-9\.,;:!\?\-\n' ]+", "", poem)
+        poem = re.sub(r"([.,;:!?])\1+", r"\1", poem)
+        poem = re.sub(
+            r"\b(lol|bye|omg|haha|uh|nah|yo|brb|wtf|racist)\b",
+            "",
+            poem,
+            flags=re.IGNORECASE
+        )
 
         logger.info("Decoding : Succes --> poem")
         logger.info(f"Length of poem : {len(poem)}")
