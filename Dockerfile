@@ -12,6 +12,7 @@ RUN pip install -r requirements.txt
 
 COPY app ./app
 COPY src ./src
+COPY static ./static
 
 RUN chmod +x ./app/run.sh
 
