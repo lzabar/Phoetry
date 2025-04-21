@@ -62,7 +62,7 @@ The poems are a little wonky.
 * logiciel 1
 * logiciel 2...
 
-### 📈4. Improvements
+### 📈5. Improvements
 Points of improvement:
 * Enrich the datasets with more poems, with better filtering of texts on their quality
 * Readjust the parameters for the fine-tuning of gpt2
