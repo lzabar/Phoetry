@@ -55,8 +55,7 @@ Here we focus on nature-related and food-related images and the final label of t
 We use OpenAI's GPT-2 as base, which is a trained large-scale unsupervised language model, which generates coherent paragraphs of text ([OpenAI's GPT-2 ](https://openai.com/index/better-language-models/)). We use GPT-2 as it is fully open source with no API costs and have low hardware requirements, even though recent versions (GPT-3, GPT-4) are more efficient.
 The model is fine-tuned on poems's dataset. For the generation, the label of the input image is used as the theme of the poem, whether it's a classical english poem or an haiku.
 
-
-### 3. Disclaimer
+### ⚠️3. Disclaimer
 The poems are a little wonky.
 
 ### 🧰4. Built with
@@ -130,23 +129,28 @@ Phoetry
   |
   |- .github
   |- app
-  |- data
   |- deployment
   |- notebooks
-      |- dump_bucket.ipynb
       |- phoetry.ipynb
-      |- test.ipynb
-      |-...
   |- src
       |- image_recognition.py
       |- my_log.py
       |- poem_generator.py
       |- training_setup.py
       |-...
+  |- static
+      |- generateur.html
+      |- index.html
+      |- script.js
+      |- style.css
+  |- test
+      |- main.py
+      |- t_label_dico.py
   |- .gitignore
   |- Dockerfile
   |- install.sh
-  |- main.py
+  |- generateur.html
+  |- LICENSE
   |- README.md
   |- requirements.txt
   |- train.py
@@ -190,7 +194,6 @@ git push --tags
 The deployment of the application is based on the repository : [deployment-repository](https://github.com/PaulToudret/phoetry_deployment)
 
 To deploy a version of the application you only have to to modify the file deployment.yaml and set the version you want.
-
 
 
 #### 3.3 Training a model
