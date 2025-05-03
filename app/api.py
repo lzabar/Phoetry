@@ -57,6 +57,24 @@ models = {}
 
 ### CODE POUR L'API
 
+@app.get("/refresh")
+def refresh():
+    URL = "https://minio.lab.sspcloud.fr/paultoudret/ensae-reproductibilite/Phoetry/Poem_models/model_available.json"
+
+    response = requests.get(URL)
+    if response.status_code == 200:
+        logger.info("Download : Success --> Available Models")
+        available_models = response.json()
+
+        model_status = {}
+        for key in available_models.keys():
+            model_status[key] = "Not initialized"
+
+    else:
+        logger.error(f"Download : Fail --> Available Models : error {response.status_code}")
+
+    return available_models
+
 @app.get("/", response_class=HTMLResponse)
 def homepage():
     return FileResponse("static/index.html")
